@@ -29,41 +29,41 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   ];
 
   const NavContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="p-6 flex items-center gap-3">
-        <div className="bg-primary p-2 rounded-lg text-white">
-          <GraduationCap size={20} />
+    <div className="flex flex-col h-full bg-card">
+      <div className="p-8 flex items-center gap-4">
+        <div className="bg-primary p-2.5 rounded-xl text-white shadow-lg shadow-primary/20">
+          <GraduationCap size={24} />
         </div>
-        <span className="font-headline font-bold text-lg text-primary">Guru Panel</span>
+        <span className="font-headline font-black text-xl text-primary tracking-tighter">GURU PANEL</span>
       </div>
-      <nav className="flex-1 px-4 space-y-2 py-4">
+      <nav className="flex-1 px-4 space-y-3 py-6">
         {navItems.map((item) => (
           <Link key={item.path} href={item.path}>
-            <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            <div className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${
               pathname === item.path 
-                ? 'bg-primary text-white shadow-md shadow-primary/20' 
-                : 'text-muted-foreground hover:bg-primary/5 hover:text-primary'
+                ? 'bg-primary text-white shadow-xl shadow-primary/30 scale-[1.02]' 
+                : 'text-muted-foreground hover:bg-primary/10 hover:text-primary font-bold'
             }`}>
-              <item.icon size={20} />
-              <span className="font-medium">{item.name}</span>
+              <item.icon size={22} className={pathname === item.path ? "animate-pulse" : ""} />
+              <span className="font-bold text-lg">{item.name}</span>
             </div>
           </Link>
         ))}
       </nav>
-      <div className="p-4 border-t space-y-4">
-        <div className="flex items-center justify-between px-4">
-          <span className="text-sm font-medium text-muted-foreground">Tema</span>
+      <div className="p-6 border-t border-border/50 space-y-6">
+        <div className="flex items-center justify-between px-4 bg-muted/50 py-3 rounded-2xl">
+          <span className="text-sm font-black uppercase tracking-widest text-muted-foreground">Mode Tema</span>
           <ThemeToggle />
         </div>
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+          className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 h-14 rounded-2xl font-black text-lg"
           onClick={() => {
             localStorage.removeItem('teacher_session');
             router.push('/');
           }}
         >
-          <LogOut className="mr-3" size={20} /> Keluar
+          <LogOut className="mr-4" size={24} /> Keluar
         </Button>
       </div>
     </div>
@@ -72,40 +72,42 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   return (
     <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
-      <aside className="w-72 bg-card border-r border-border hidden md:flex flex-col shadow-sm">
+      <aside className="w-80 bg-card border-r border-border/50 hidden md:flex flex-col shadow-2xl z-20">
         <NavContent />
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-card border-b flex items-center justify-between px-6 md:px-8">
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        <header className="h-20 bg-card/80 backdrop-blur-md border-b border-border/50 flex items-center justify-between px-8 z-10">
           <div className="flex items-center gap-4">
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu size={24} />
+                  <Menu size={28} />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-72">
+              <SheetContent side="left" className="p-0 w-80 border-r-4 border-primary/20">
                 <NavContent />
               </SheetContent>
             </Sheet>
-            <h2 className="font-bold text-lg hidden sm:block">
+            <h2 className="font-black text-2xl hidden sm:block text-foreground tracking-tight">
               {navItems.find(item => item.path === pathname)?.name || 'Dashboard'}
             </h2>
           </div>
-          <div className="flex items-center gap-4">
-             <div className="hidden md:block">
+          <div className="flex items-center gap-6">
+             <div className="hidden md:flex items-center bg-muted/50 p-1 rounded-full">
                <ThemeToggle />
              </div>
-             <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full text-primary">
-                <Users size={16} />
-                <span className="text-xs font-bold uppercase tracking-wider">Guru Aktif</span>
+             <div className="flex items-center gap-3 px-5 py-2.5 bg-primary/10 rounded-2xl text-primary ring-2 ring-primary/5 shadow-inner">
+                <Users size={20} />
+                <span className="text-xs font-black uppercase tracking-[0.2em]">Guru Aktif</span>
              </div>
           </div>
         </header>
-        <div className="flex-1 overflow-auto p-4 md:p-8">
-          {children}
+        <div className="flex-1 overflow-auto p-6 md:p-10 bg-muted/20">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </div>
       </main>
     </div>

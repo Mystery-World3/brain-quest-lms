@@ -10,7 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Send, Timer, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, Timer, Star, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -32,7 +32,14 @@ export default function QuizPage() {
     setAnswers(new Array(foundQuiz.questions.length).fill(-1));
   }, [classId]);
 
-  if (!quiz) return <div className="p-8 text-center font-bold">Memuat quiz...</div>;
+  if (!quiz) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="font-bold text-lg">Memuat Kuis...</p>
+      </div>
+    </div>
+  );
 
   const currentQuestion = quiz.questions[currentIdx];
   const progress = ((currentIdx + 1) / quiz.questions.length) * 100;
@@ -49,7 +56,7 @@ export default function QuizPage() {
       setTimeout(() => {
         setCurrentIdx(currentIdx + 1);
         setIsTransitioning(false);
-      }, 200);
+      }, 300);
     }
   };
 
@@ -59,7 +66,7 @@ export default function QuizPage() {
       setTimeout(() => {
         setCurrentIdx(currentIdx - 1);
         setIsTransitioning(false);
-      }, 200);
+      }, 300);
     }
   };
 
@@ -83,99 +90,112 @@ export default function QuizPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center">
-      {/* Universal Theme Toggle for Students */}
+      {/* Universal Theme Toggle */}
       <div className="fixed top-6 right-6 z-50">
         <ThemeToggle />
       </div>
 
-      <div className="w-full max-w-3xl space-y-6">
-        {/* Animated Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-center bg-card p-6 rounded-3xl shadow-xl border-2 border-primary/10 gap-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-primary/20 p-3 rounded-2xl">
-               <Star className="text-primary fill-primary animate-spin-slow" />
+      <div className="w-full max-w-4xl space-y-8">
+        {/* Modern Interactive Header */}
+        <div className="flex flex-col md:flex-row justify-between items-center bg-card p-8 rounded-[2.5rem] shadow-xl border-2 border-primary/10 gap-6 backdrop-blur-md">
+          <div className="flex items-center gap-6">
+            <div className="bg-primary/10 p-4 rounded-2xl ring-2 ring-primary/20">
+               <Star className="text-primary fill-primary animate-spin-slow w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-xl font-headline font-bold text-primary">{quiz.title}</h1>
-              <p className="text-sm font-medium text-muted-foreground">Halo, <span className="text-primary font-bold">{studentName}</span>! Semangat ya!</p>
+              <h1 className="text-2xl font-headline font-black text-primary leading-tight">{quiz.title}</h1>
+              <p className="text-lg font-bold text-muted-foreground">Halo, <span className="text-primary">{studentName}</span>! Fokus ya! 🚀</p>
             </div>
           </div>
-          <div className="text-center sm:text-right w-full sm:w-auto">
-            <div className="flex items-center justify-center sm:justify-end gap-2 mb-2">
-              <Timer size={16} className="text-muted-foreground" />
-              <span className="text-sm font-bold text-primary">Soal {currentIdx + 1} dari {quiz.questions.length}</span>
+          <div className="text-center md:text-right w-full md:w-auto space-y-3">
+            <div className="flex items-center justify-center md:justify-end gap-3">
+              <Timer size={20} className="text-primary animate-pulse" />
+              <span className="text-lg font-black text-foreground">Soal {currentIdx + 1} / {quiz.questions.length}</span>
             </div>
-            <Progress value={progress} className="w-full sm:w-48 h-3 rounded-full bg-muted shadow-inner" />
+            <div className="relative pt-1">
+               <Progress value={progress} className="w-full md:w-56 h-4 rounded-full bg-muted border-2 border-primary/5" />
+               <span className="absolute top-0 right-0 text-[10px] font-black uppercase text-primary/40 tracking-widest">{Math.round(progress)}% SELESAI</span>
+            </div>
           </div>
         </div>
 
         {/* Question Card with Animation */}
         <Card className={cn(
-          "border-none shadow-2xl overflow-hidden rounded-3xl transition-all duration-300",
-          isTransitioning ? "opacity-0 translate-x-10" : "opacity-100 translate-x-0"
+          "border-none shadow-2xl overflow-hidden rounded-[3rem] transition-all duration-500 bg-card/50 backdrop-blur-sm",
+          isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
         )}>
-          <CardHeader className="bg-primary/5 border-b border-primary/10 py-10 px-8 md:px-12">
-            <CardTitle className="text-2xl md:text-3xl leading-relaxed text-foreground font-headline">
-              <span className="text-primary mr-2 font-black">{currentIdx + 1}.</span> {currentQuestion.text}
+          <CardHeader className="bg-primary/5 border-b border-primary/10 py-12 px-8 md:px-16">
+            <CardTitle className="text-3xl md:text-4xl leading-snug text-foreground font-headline font-black">
+              <span className="bg-primary text-white px-4 py-1 rounded-2xl mr-4 shadow-lg">{currentIdx + 1}</span> 
+              {currentQuestion.text}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6 md:p-12">
+          <CardContent className="p-8 md:p-16">
             <RadioGroup 
               value={answers[currentIdx].toString()} 
               onValueChange={(val) => handleSelectOption(parseInt(val))}
-              className="space-y-4"
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
             >
-              {currentQuestion.options.map((option, i) => (
-                <div key={i}>
-                  <Label
-                    htmlFor={`opt-${i}`}
-                    className={cn(
-                      "flex items-center gap-5 p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 active:scale-95 group",
-                      answers[currentIdx] === i 
-                        ? 'border-primary bg-primary/10 shadow-lg ring-2 ring-primary' 
-                        : 'border-border bg-card hover:border-accent hover:bg-accent/5'
-                    )}
-                  >
-                    <RadioGroupItem value={i.toString()} id={`opt-${i}`} className="sr-only" />
-                    <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center font-black border-2 transition-all duration-300 group-hover:rotate-12",
-                      answers[currentIdx] === i 
-                        ? 'bg-primary border-primary text-white shadow-md' 
-                        : 'border-muted-foreground/20 text-muted-foreground'
-                    )}>
-                      {String.fromCharCode(65 + i)}
-                    </div>
-                    <span className="text-lg md:text-xl font-semibold">{option}</span>
-                  </Label>
-                </div>
-              ))}
+              {currentQuestion.options.map((option, i) => {
+                const isSelected = answers[currentIdx] === i;
+                return (
+                  <div key={i}>
+                    <Label
+                      htmlFor={`opt-${i}`}
+                      className={cn(
+                        "flex items-center gap-6 p-8 rounded-[2rem] border-4 cursor-pointer transition-all duration-300 active:scale-95 group relative overflow-hidden",
+                        isSelected 
+                          ? 'border-primary bg-primary/10 shadow-2xl shadow-primary/20 ring-4 ring-primary/20 translate-y-[-4px]' 
+                          : 'border-border bg-card hover:border-accent hover:bg-accent/5 hover:translate-y-[-2px]'
+                      )}
+                    >
+                      <RadioGroupItem value={i.toString()} id={`opt-${i}`} className="sr-only" />
+                      <div className={cn(
+                        "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl border-4 transition-all duration-300 group-hover:rotate-6",
+                        isSelected 
+                          ? 'bg-primary border-primary text-white shadow-xl' 
+                          : 'border-muted-foreground/10 text-muted-foreground'
+                      )}>
+                        {String.fromCharCode(65 + i)}
+                      </div>
+                      <span className="text-xl md:text-2xl font-black">{option}</span>
+                      
+                      {isSelected && (
+                        <div className="absolute right-6 top-1/2 -translate-y-1/2 text-primary animate-in fade-in zoom-in">
+                          <CheckCircle2 size={32} />
+                        </div>
+                      )}
+                    </Label>
+                  </div>
+                );
+              })}
             </RadioGroup>
           </CardContent>
-          <CardFooter className="flex justify-between p-8 bg-muted/10 border-t">
+          <CardFooter className="flex justify-between p-10 bg-primary/5 border-t border-primary/10">
             <Button 
               variant="outline" 
               onClick={prevQuestion}
               disabled={currentIdx === 0}
-              className="h-14 px-8 rounded-2xl border-2 font-bold transition-all"
+              className="h-16 px-10 rounded-2xl border-4 font-black text-xl transition-all hover:bg-background"
             >
-              <ChevronLeft className="mr-2" /> Kembali
+              <ChevronLeft className="mr-2 w-6 h-6" /> Kembali
             </Button>
 
             {currentIdx === quiz.questions.length - 1 ? (
               <Button 
                 onClick={handleFinish}
                 disabled={answers.some(a => a === -1)}
-                className="h-14 px-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-xl shadow-green-500/30 animate-pulse-slow"
+                className="h-16 px-12 bg-green-600 hover:bg-green-700 text-white font-black text-xl rounded-2xl shadow-2xl shadow-green-500/40 active:scale-95 transition-all"
               >
-                Kumpulkan <Send className="ml-2 w-5 h-5" />
+                Selesai & Kumpulkan <Send className="ml-3 w-6 h-6" />
               </Button>
             ) : (
               <Button 
                 onClick={nextQuestion}
                 disabled={answers[currentIdx] === -1}
-                className="h-14 px-8 rounded-2xl font-bold transition-all"
+                className="h-16 px-10 rounded-2xl font-black text-xl transition-all shadow-xl shadow-primary/20"
               >
-                Berikutnya <ChevronRight className="ml-2" />
+                Berikutnya <ChevronRight className="ml-2 w-6 h-6" />
               </Button>
             )}
           </CardFooter>
