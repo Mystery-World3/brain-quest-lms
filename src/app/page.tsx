@@ -20,8 +20,10 @@ export default function LandingPage() {
 
   const handleStart = () => {
     if (selectedClass && studentName) {
+      const className = classes.find(c => c.id === selectedClass)?.name || '';
       localStorage.setItem('student_name', studentName);
       localStorage.setItem('student_class', selectedClass);
+      localStorage.setItem('student_class_name', className);
       router.push(`/student/quiz/${selectedClass}`);
     }
   };
@@ -110,10 +112,6 @@ export default function LandingPage() {
             )}
           </CardContent>
         </Card>
-        
-        <p className="mt-10 text-center text-muted-foreground text-sm font-black uppercase tracking-[0.2em] opacity-60">
-          Digital Learning Experience
-        </p>
       </div>
     </div>
   );

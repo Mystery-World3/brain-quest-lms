@@ -1,42 +1,113 @@
+
 "use client";
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { classes } from '@/lib/mock-data';
+import { classes, initialQuizzes } from '@/lib/mock-data';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Download, Search, User, TrendingUp } from 'lucide-react';
+import { Calendar, Download, Search, User, TrendingUp, Trash2, Pencil, Plus, Save, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function StudentScores() {
   const { toast } = useToast();
+  const [scores, setScores] = useState<any[]>([]);
   const [selectedClass, setSelectedClass] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [scoreToDelete, setScoreToDelete] = useState<string | null>(null);
+  const [editingScore, setEditingScore] = useState<any>(null);
 
-  const mockScores = [
-    { id: '1', name: 'Budi Santoso', classId: '7-a', className: 'Kelas 7 - A', quiz: 'Bilangan Bulat', score: 85, date: '2023-11-20' },
-    { id: '2', name: 'Ani Wijaya', classId: '7-a', className: 'Kelas 7 - A', quiz: 'Bilangan Bulat', score: 92, date: '2023-11-20' },
-    { id: '3', name: 'Citra Dewi', classId: '7-b', className: 'Kelas 7 - B', quiz: 'Aljabar I', score: 78, date: '2023-11-19' },
-    { id: '4', name: 'Dedi Kurniawan', classId: '8-a', className: 'Kelas 8 - A', quiz: 'Geometri', score: 88, date: '2023-11-18' },
-    { id: '5', name: 'Eka Putri', classId: '9-a', className: 'Kelas 9 - A', quiz: 'Statistika', score: 100, date: '2023-11-18' },
-  ];
+  useEffect(() => {
+    const saved = localStorage.getItem('app_scores');
+    if (saved) {
+      setScores(JSON.parse(saved));
+    } else {
+      const mock = [
+        { id: '1', name: 'Budi Santoso', classId: '7-a', className: 'Kelas 7 - A', quiz: 'Bilangan Bulat', score: 85, date: '2023-11-20' },
+        { id: '2', name: 'Ani Wijaya', classId: '7-a', className: 'Kelas 7 - A', quiz: 'Bilangan Bulat', score: 92, date: '2023-11-20' },
+        { id: '3', name: 'Citra Dewi', classId: '7-b', className: 'Kelas 7 - B', quiz: 'Aljabar I', score: 78, date: '2023-11-19' },
+      ];
+      setScores(mock);
+      localStorage.setItem('app_scores', JSON.stringify(mock));
+    }
+  }, []);
 
-  const filteredScores = mockScores.filter(s => {
+  const saveScores = (newScores: any[]) => {
+    setScores(newScores);
+    localStorage.setItem('app_scores', JSON.stringify(newScores));
+  };
+
+  const filteredScores = scores.filter(s => {
     const matchesClass = selectedClass === 'all' || s.classId === selectedClass;
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesClass && matchesSearch;
   });
 
-  const handleExport = () => {
-    toast({
-      title: "Laporan Diekspor",
-      description: "File laporan Excel sedang disiapkan untuk diunduh.",
-    });
+  const handleDeleteRequest = (id: string) => {
+    setScoreToDelete(id);
+    setIsDeleteDialogOpen(true);
   };
+
+  const confirmDelete = () => {
+    if (scoreToDelete) {
+      const updated = scores.filter(s => s.id !== scoreToDelete);
+      saveScores(updated);
+      toast({ title: "Nilai Dihapus", description: "Catatan nilai siswa telah dihapus." });
+    }
+    setIsDeleteDialogOpen(false);
+  };
+
+  const openAddDialog = () => {
+    setEditingScore({
+      id: `score-${Date.now()}`,
+      name: '',
+      classId: '',
+      quiz: '',
+      score: 0,
+      date: new Date().toISOString().split('T')[0]
+    });
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (score: any) => {
+    setEditingScore({ ...score });
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveScore = () => {
+    if (!editingScore?.name || !editingScore?.classId || !editingScore?.quiz) {
+      toast({ variant: "destructive", title: "Data Belum Lengkap", description: "Mohon isi seluruh data siswa." });
+      return;
+    }
+
+    const className = classes.find(c => c.id === editingScore.classId)?.name || '';
+    const updatedScores = [...scores];
+    const index = updatedScores.findIndex(s => s.id === editingScore.id);
+    
+    const finalData = { ...editingScore, className };
+
+    if (index >= 0) {
+      updatedScores[index] = finalData;
+    } else {
+      updatedScores.push(finalData);
+    }
+
+    saveScores(updatedScores);
+    setIsDialogOpen(false);
+    toast({ title: "Berhasil Disimpan", description: `Nilai untuk ${editingScore.name} telah diperbarui.` });
+  };
+
+  const avgScore = scores.length > 0 
+    ? (scores.reduce((acc, s) => acc + s.score, 0) / scores.length).toFixed(1)
+    : 0;
 
   return (
     <div className="space-y-8">
@@ -45,9 +116,16 @@ export default function StudentScores() {
           <h1 className="text-4xl font-headline font-black text-foreground tracking-tighter">Laporan Nilai Siswa</h1>
           <p className="text-lg font-bold text-muted-foreground mt-1">Monitoring progres dan hasil evaluasi setiap siswa.</p>
         </div>
-        <Button onClick={handleExport} className="h-14 px-10 font-black text-lg rounded-2xl shadow-xl active:scale-95 transition-all flex items-center gap-3">
-          <Download size={22} /> Ekspor Laporan
-        </Button>
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={() => {
+            toast({ title: "Laporan Diekspor", description: "File laporan Excel sedang disiapkan." });
+          }} className="h-14 px-8 font-black text-lg rounded-2xl border-2">
+            <Download size={22} className="mr-2" /> Ekspor
+          </Button>
+          <Button onClick={openAddDialog} className="h-14 px-8 font-black text-lg rounded-2xl shadow-xl shadow-primary/20">
+            <Plus size={22} className="mr-2" /> Tambah Manual
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -57,7 +135,7 @@ export default function StudentScores() {
            </div>
            <div>
              <p className="text-white/70 font-black text-xs uppercase tracking-widest">Rata-rata Skor</p>
-             <h3 className="text-4xl font-black">88.6</h3>
+             <h3 className="text-4xl font-black">{avgScore}</h3>
            </div>
         </Card>
         <Card className="border-none shadow-xl bg-accent text-white p-6 rounded-[2rem] flex items-center gap-6">
@@ -65,8 +143,8 @@ export default function StudentScores() {
               <User size={32} />
            </div>
            <div>
-             <p className="text-white/70 font-black text-xs uppercase tracking-widest">Total Siswa</p>
-             <h3 className="text-4xl font-black">254</h3>
+             <p className="text-white/70 font-black text-xs uppercase tracking-widest">Total Catatan</p>
+             <h3 className="text-4xl font-black">{scores.length}</h3>
            </div>
         </Card>
         <Card className="border-none shadow-xl bg-card p-6 rounded-[2rem] flex items-center gap-6 border-2 border-primary/5">
@@ -75,7 +153,7 @@ export default function StudentScores() {
            </div>
            <div>
              <p className="text-muted-foreground font-black text-xs uppercase tracking-widest">Update Terakhir</p>
-             <h3 className="text-xl font-black text-foreground">Hari ini, 10:45</h3>
+             <h3 className="text-xl font-black text-foreground">Hari ini, {new Date().getHours()}:{new Date().getMinutes()}</h3>
            </div>
         </Card>
       </div>
@@ -160,7 +238,10 @@ export default function StudentScores() {
                   </TableCell>
                   <TableCell className="font-bold text-muted-foreground/80">{item.date}</TableCell>
                   <TableCell className="text-right pr-10">
-                    <Button variant="outline" className="h-11 px-6 rounded-xl font-black border-2 hover:bg-primary hover:text-white transition-all">Detail</Button>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="icon" onClick={() => openEditDialog(item)} className="h-10 w-10 rounded-xl border-2 hover:bg-primary hover:text-white transition-all"><Pencil size={18} /></Button>
+                      <Button variant="outline" size="icon" onClick={() => handleDeleteRequest(item.id)} className="h-10 w-10 rounded-xl border-2 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18} /></Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -169,11 +250,88 @@ export default function StudentScores() {
           {filteredScores.length === 0 && (
             <div className="p-24 text-center">
               <p className="text-2xl font-black text-muted-foreground">Tidak ada hasil ditemukan.</p>
-              <p className="text-muted-foreground font-bold">Sesuaikan filter atau pencarian Anda.</p>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Add/Edit Score Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
+          <div className="bg-primary p-8 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-3xl font-headline font-black">
+                {editingScore?.id?.includes('score-') ? 'Edit Nilai' : 'Tambah Nilai Manual'}
+              </DialogTitle>
+              <DialogDescription className="text-white/80 font-bold text-lg">Lengkapi data hasil ujian siswa.</DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="p-8 space-y-6">
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Nama Siswa</label>
+              <Input 
+                value={editingScore?.name || ''}
+                onChange={(e) => setEditingScore({ ...editingScore!, name: e.target.value })}
+                placeholder="Nama Lengkap" 
+                className="h-14 rounded-xl border-2 font-bold text-lg" 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Tingkat Kelas</label>
+              <Select value={editingScore?.classId || ''} onValueChange={(val) => setEditingScore({ ...editingScore!, classId: val })}>
+                <SelectTrigger className="h-14 rounded-xl border-2 font-bold text-lg">
+                  <SelectValue placeholder="Pilih Kelas" />
+                </SelectTrigger>
+                <SelectContent>
+                  {classes.map(c => <SelectItem key={c.id} value={c.id} className="font-bold">{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Nama Kuis / Materi</label>
+              <Input 
+                value={editingScore?.quiz || ''}
+                onChange={(e) => setEditingScore({ ...editingScore!, quiz: e.target.value })}
+                placeholder="Contoh: Matematika Dasar" 
+                className="h-14 rounded-xl border-2 font-bold text-lg" 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Skor Akhir (0-100)</label>
+              <Input 
+                type="number"
+                max={100}
+                min={0}
+                value={editingScore?.score || 0}
+                onChange={(e) => setEditingScore({ ...editingScore!, score: parseInt(e.target.value) || 0 })}
+                className="h-14 rounded-xl border-2 font-bold text-2xl" 
+              />
+            </div>
+          </div>
+          <DialogFooter className="p-8 bg-muted/20 border-t flex gap-3">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-xl font-black">Batal</Button>
+            <Button onClick={handleSaveScore} className="h-14 px-10 rounded-xl font-black shadow-lg">Simpan Nilai</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="rounded-[2rem]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black">Hapus Data Nilai?</AlertDialogTitle>
+            <AlertDialogDescription className="text-lg font-bold">
+              Catatan nilai siswa ini akan dihapus secara permanen dari sistem laporan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-3 mt-4">
+            <AlertDialogCancel className="h-12 rounded-xl font-bold">Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="h-12 rounded-xl bg-red-600 hover:bg-red-700 font-black">
+              Hapus Data
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -27,7 +27,15 @@ export default function QuizPage() {
     const name = localStorage.getItem('student_name') || 'Siswa';
     setStudentName(name);
 
-    const foundQuiz = initialQuizzes.find(q => q.classId === classId) || initialQuizzes[0];
+    // Try loading from localStorage first, then fallback to mock
+    const savedQuizzesRaw = localStorage.getItem('app_quizzes');
+    let quizzesToSearch = initialQuizzes;
+    
+    if (savedQuizzesRaw) {
+      quizzesToSearch = JSON.parse(savedQuizzesRaw);
+    }
+
+    const foundQuiz = quizzesToSearch.find(q => q.classId === classId) || quizzesToSearch[0];
     setQuiz(foundQuiz);
     setAnswers(new Array(foundQuiz.questions.length).fill(-1));
   }, [classId]);
@@ -81,22 +89,37 @@ export default function QuizPage() {
       score: finalScore,
       answers,
       quizId: quiz.id,
+      quizTitle: quiz.title,
       classId: classId as string,
       timestamp: new Date().toISOString()
     };
+
+    // Save result to global scores for teacher
+    const savedScoresRaw = localStorage.getItem('app_scores');
+    const allScores = savedScoresRaw ? JSON.parse(savedScoresRaw) : [];
+    
+    allScores.push({
+      id: `res-${Date.now()}`,
+      name: studentName,
+      classId: classId as string,
+      className: localStorage.getItem('student_class_name') || 'Kelas',
+      quiz: quiz.title,
+      score: finalScore,
+      date: new Date().toISOString().split('T')[0]
+    });
+    
+    localStorage.setItem('app_scores', JSON.stringify(allScores));
     localStorage.setItem('last_result', JSON.stringify(result));
     router.push('/student/results');
   };
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center">
-      {/* Universal Theme Toggle */}
       <div className="fixed top-6 right-6 z-50">
         <ThemeToggle />
       </div>
 
       <div className="w-full max-w-4xl space-y-8">
-        {/* Modern Interactive Header */}
         <div className="flex flex-col md:flex-row justify-between items-center bg-card p-8 rounded-[2.5rem] shadow-xl border-2 border-primary/10 gap-6 backdrop-blur-md">
           <div className="flex items-center gap-6">
             <div className="bg-primary/10 p-4 rounded-2xl ring-2 ring-primary/20">
@@ -114,12 +137,10 @@ export default function QuizPage() {
             </div>
             <div className="relative pt-1">
                <Progress value={progress} className="w-full md:w-56 h-4 rounded-full bg-muted border-2 border-primary/5" />
-               <span className="absolute top-0 right-0 text-[10px] font-black uppercase text-primary/40 tracking-widest">{Math.round(progress)}% SELESAI</span>
             </div>
           </div>
         </div>
 
-        {/* Question Card with Animation */}
         <Card className={cn(
           "border-none shadow-2xl overflow-hidden rounded-[3rem] transition-all duration-500 bg-card/50 backdrop-blur-sm",
           isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
