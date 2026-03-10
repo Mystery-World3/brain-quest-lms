@@ -7,7 +7,7 @@ import { initialQuizzes, classes } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, Trophy, Home, Share2, Award, ArrowRight, User, Medal } from 'lucide-react';
+import { CheckCircle2, XCircle, Trophy, Home, Share2, Award, ArrowRight, User, Medal, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +38,7 @@ export default function ResultsPage() {
     }
     const parsed = JSON.parse(lastResult);
     setResult(parsed);
-    setQuiz(initialQuizzes.find(q => q.id === parsed.quizId));
+    setQuiz(initialQuizzes.find(q => q.id === parsed.quizId) || initialQuizzes[0]);
   }, [router]);
 
   if (!result || !quiz) return (
@@ -50,28 +50,36 @@ export default function ResultsPage() {
   const isHighPerformance = result.score >= 80;
 
   const handleShare = async () => {
-    const text = `Hore! Saya baru saja menyelesaikan kuis "${quiz.title}" dengan skor ${Math.round(result.score)}. Ayo belajar bersama di LKPD Digital!`;
+    const shareText = `Hore! 🏆 Saya baru saja menyelesaikan kuis "${quiz.title}" dengan skor ${Math.round(result.score)}/100 di LKPD Digital! Ayo belajar bersama! 🚀`;
     
-    if (navigator.share) {
-      try {
+    try {
+      if (navigator.share) {
         await navigator.share({
-          title: 'Hasil Kuis LKPD Digital',
-          text: text,
+          title: 'Capaian LKPD Digital',
+          text: shareText,
           url: window.location.origin,
         });
-      } catch (err) {
-        console.error('Error sharing:', err);
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        toast({
+          title: "Berhasil Disalin! ✨",
+          description: "Pesan pencapaian kamu sudah ada di papan klip, silakan tempel dan bagikan ke teman-teman!",
+        });
       }
-    } else {
-      navigator.clipboard.writeText(text);
-      toast({
-        title: "Berhasil Disalin!",
-        description: "Pesan pencapaian kamu telah disalin ke papan klip.",
-      });
+    } catch (err) {
+      // User cancelled share or other error
+      if ((err as Error).name !== 'AbortError') {
+        toast({
+          variant: "destructive",
+          title: "Gagal Berbagi",
+          description: "Terjadi kesalahan saat mencoba membagikan hasil.",
+        });
+      }
     }
   };
 
   // Mock scoreboard data for the current class
+  const currentClassName = classes.find(c => c.id === result.classId)?.name || "Kelas";
   const classScores = [
     { name: studentName, score: result.score, isCurrent: true },
     { name: 'Rahmat Hidayat', score: 95, isCurrent: false },
@@ -104,15 +112,15 @@ export default function ResultsPage() {
             <h1 className="text-5xl md:text-7xl font-headline font-black mb-6 drop-shadow-2xl">
               {isHighPerformance ? 'LUAR BIASA!' : 'KERJA BAGUS!'}
             </h1>
-            <p className="text-white/90 text-xl md:text-2xl font-bold mb-12 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-white/95 text-xl md:text-2xl font-bold mb-12 max-w-2xl mx-auto leading-relaxed">
               {isHighPerformance 
                 ? 'Prestasi yang membanggakan! Pertahankan semangat belajarmu untuk tantangan berikutnya.'
                 : 'Kamu sudah mencoba yang terbaik! Mari kita ulas kembali jawaban yang kurang tepat agar lebih paham.'}
             </p>
             
-            <div className="relative group">
+            <div className="relative group cursor-pointer" onClick={handleShare}>
               <div className="absolute inset-0 bg-white/40 blur-3xl rounded-full scale-125 animate-pulse" />
-              <div className="relative inline-flex flex-col items-center justify-center bg-white text-primary rounded-full w-56 h-56 shadow-[0_15px_60px_-15px_rgba(255,255,255,0.5)] border-[15px] border-primary/10 transition-transform group-hover:scale-105 duration-500">
+              <div className="relative inline-flex flex-col items-center justify-center bg-white text-primary rounded-full w-56 h-56 shadow-[0_15px_60px_-15px_rgba(255,255,255,0.5)] border-[15px] border-primary/10 transition-transform group-hover:scale-110 duration-500">
                 <span className="text-7xl font-black">{Math.round(result.score)}</span>
                 <span className="text-lg font-black uppercase tracking-[0.3em] opacity-80">SKOR</span>
               </div>
@@ -124,26 +132,26 @@ export default function ResultsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
            <Card 
             onClick={handleShare}
-            className="p-8 flex flex-row items-center gap-6 border-4 rounded-[2.5rem] hover:bg-primary/5 transition-all cursor-pointer group shadow-xl hover:shadow-primary/20 active:scale-95"
+            className="p-8 flex flex-row items-center gap-6 border-4 rounded-[2.5rem] hover:bg-primary/5 transition-all cursor-pointer group shadow-xl hover:shadow-primary/20 active:scale-95 border-primary/10"
            >
               <div className="bg-primary/10 p-5 rounded-2xl text-primary group-hover:scale-110 group-hover:rotate-6 transition-all shadow-inner">
                 <Share2 size={32} />
               </div>
               <div className="text-left">
                 <h3 className="text-2xl font-black text-foreground">Bagikan Hasil</h3>
-                <p className="text-muted-foreground font-bold">Pamerkan skormu!</p>
+                <p className="text-muted-foreground font-bold">Pamerkan skormu! ✨</p>
               </div>
            </Card>
            <Card 
             onClick={() => setShowScoreboard(true)}
-            className="p-8 flex flex-row items-center gap-6 border-4 rounded-[2.5rem] hover:bg-accent/5 transition-all cursor-pointer group shadow-xl hover:shadow-accent/20 active:scale-95"
+            className="p-8 flex flex-row items-center gap-6 border-4 rounded-[2.5rem] hover:bg-accent/5 transition-all cursor-pointer group shadow-xl hover:shadow-accent/20 active:scale-95 border-accent/10"
            >
               <div className="bg-accent/10 p-5 rounded-2xl text-accent group-hover:scale-110 group-hover:-rotate-6 transition-all shadow-inner">
                 <Trophy size={32} />
               </div>
               <div className="text-left">
                 <h3 className="text-2xl font-black text-foreground">Papan Skor</h3>
-                <p className="text-muted-foreground font-bold">Lihat peringkatmu</p>
+                <p className="text-muted-foreground font-bold">Peringkat {currentClassName}</p>
               </div>
            </Card>
         </div>
@@ -159,7 +167,7 @@ export default function ResultsPage() {
               return (
                 <Card key={q.id} className={cn(
                   "border-4 rounded-[2.5rem] shadow-xl transition-all duration-300 student-card-hover overflow-hidden",
-                  isCorrect ? "hover:border-green-500/50" : "hover:border-red-500/50"
+                  isCorrect ? "border-green-500/10 hover:border-green-500/50" : "border-red-500/10 hover:border-red-500/50"
                 )}>
                   <div className="p-8 flex flex-col md:flex-row gap-8">
                     <div className={cn(
@@ -239,26 +247,28 @@ export default function ResultsPage() {
             <div className="absolute -top-10 -right-10 opacity-10 rotate-12">
               <Trophy size={200} />
             </div>
-            <Medal size={64} className="mx-auto mb-6 animate-bounce" />
-            <DialogTitle className="text-4xl font-headline font-black mb-2">Papan Skor Kelas</DialogTitle>
-            <DialogDescription className="text-white/80 text-lg font-bold">
-              Peringkat kuis {quiz.title} untuk kelas {classes.find(c => c.id === result.classId)?.name}
-            </DialogDescription>
+            <div className="relative z-10">
+              <Medal size={64} className="mx-auto mb-6 animate-bounce" />
+              <DialogTitle className="text-4xl font-headline font-black mb-2">Papan Skor Kelas</DialogTitle>
+              <DialogDescription className="text-white/80 text-lg font-bold">
+                Peringkat kuis {quiz.title} untuk {currentClassName}
+              </DialogDescription>
+            </div>
           </div>
-          <div className="p-8 space-y-4 max-h-[50vh] overflow-auto">
+          <div className="p-8 space-y-4 max-h-[50vh] overflow-auto bg-background/50 backdrop-blur-sm">
             {classScores.map((score, idx) => (
               <div 
                 key={idx}
                 className={cn(
-                  "flex items-center justify-between p-6 rounded-2xl border-4 transition-all",
+                  "flex items-center justify-between p-6 rounded-2xl border-4 transition-all duration-300",
                   score.isCurrent 
                     ? "border-primary bg-primary/10 shadow-lg scale-[1.02]" 
-                    : "border-muted/30 bg-card"
+                    : "border-muted/30 bg-card hover:border-accent/30"
                 )}
               >
                 <div className="flex items-center gap-6">
                   <div className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl",
+                    "w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl shadow-sm",
                     idx === 0 ? "bg-yellow-400 text-white" : 
                     idx === 1 ? "bg-slate-300 text-white" :
                     idx === 2 ? "bg-amber-600 text-white" : "bg-muted text-muted-foreground"
@@ -266,21 +276,21 @@ export default function ResultsPage() {
                     {idx + 1}
                   </div>
                   <div className="flex items-center gap-3">
-                    <User size={20} className={score.isCurrent ? "text-primary" : "text-muted-foreground"} />
-                    <span className={cn("text-xl font-black", score.isCurrent && "text-primary")}>
+                    {score.isCurrent ? <Sparkles size={20} className="text-primary animate-pulse" /> : <User size={20} className="text-muted-foreground" />}
+                    <span className={cn("text-xl font-black", score.isCurrent ? "text-primary" : "text-foreground")}>
                       {score.name} {score.isCurrent && "(Kamu)"}
                     </span>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-2xl font-black text-foreground">{Math.round(score.score)}</span>
-                  <span className="text-xs font-black text-muted-foreground block uppercase">Skor</span>
+                  <span className="text-xs font-black text-muted-foreground block uppercase tracking-tighter">Skor</span>
                 </div>
               </div>
             ))}
           </div>
           <div className="p-8 bg-muted/20 border-t flex justify-center">
-            <Button onClick={() => setShowScoreboard(false)} className="h-14 px-12 rounded-2xl font-black text-lg shadow-xl">
+            <Button onClick={() => setShowScoreboard(false)} className="h-14 px-12 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all">
               Tutup Papan Skor
             </Button>
           </div>
