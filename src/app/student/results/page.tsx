@@ -7,10 +7,9 @@ import { initialQuizzes, classes } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, Trophy, Home, Share2, Award, ArrowRight, User, Medal, Sparkles } from 'lucide-react';
+import { CheckCircle2, XCircle, Trophy, Home, Award, ArrowRight, User, Medal, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +20,6 @@ import {
 
 export default function ResultsPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [result, setResult] = useState<any>(null);
   const [quiz, setQuiz] = useState<any>(null);
   const [showScoreboard, setShowScoreboard] = useState(false);
@@ -48,35 +46,6 @@ export default function ResultsPage() {
   );
 
   const isHighPerformance = result.score >= 80;
-
-  const handleShare = async () => {
-    const shareText = `Hore! 🏆 Saya baru saja menyelesaikan kuis "${quiz.title}" dengan skor ${Math.round(result.score)}/100 di LKPD Digital! Ayo belajar bersama! 🚀`;
-    
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Capaian LKPD Digital',
-          text: shareText,
-          url: window.location.origin,
-        });
-      } else {
-        await navigator.clipboard.writeText(shareText);
-        toast({
-          title: "Berhasil Disalin! ✨",
-          description: "Pesan pencapaian kamu sudah ada di papan klip, silakan tempel dan bagikan ke teman-teman!",
-        });
-      }
-    } catch (err) {
-      // User cancelled share or other error
-      if ((err as Error).name !== 'AbortError') {
-        toast({
-          variant: "destructive",
-          title: "Gagal Berbagi",
-          description: "Terjadi kesalahan saat mencoba membagikan hasil.",
-        });
-      }
-    }
-  };
 
   // Mock scoreboard data for the current class
   const currentClassName = classes.find(c => c.id === result.classId)?.name || "Kelas";
@@ -118,9 +87,9 @@ export default function ResultsPage() {
                 : 'Kamu sudah mencoba yang terbaik! Mari kita ulas kembali jawaban yang kurang tepat agar lebih paham.'}
             </p>
             
-            <div className="relative group cursor-pointer" onClick={handleShare}>
+            <div className="relative group">
               <div className="absolute inset-0 bg-white/40 blur-3xl rounded-full scale-125 animate-pulse" />
-              <div className="relative inline-flex flex-col items-center justify-center bg-white text-primary rounded-full w-56 h-56 shadow-[0_15px_60px_-15px_rgba(255,255,255,0.5)] border-[15px] border-primary/10 transition-transform group-hover:scale-110 duration-500">
+              <div className="relative inline-flex flex-col items-center justify-center bg-white text-primary rounded-full w-56 h-56 shadow-[0_15px_60px_-15px_rgba(255,255,255,0.5)] border-[15px] border-primary/10 transition-transform group-hover:scale-105 duration-500">
                 <span className="text-7xl font-black">{Math.round(result.score)}</span>
                 <span className="text-lg font-black uppercase tracking-[0.3em] opacity-80">SKOR</span>
               </div>
@@ -129,29 +98,17 @@ export default function ResultsPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-           <Card 
-            onClick={handleShare}
-            className="p-8 flex flex-row items-center gap-6 border-4 rounded-[2.5rem] hover:bg-primary/5 transition-all cursor-pointer group shadow-xl hover:shadow-primary/20 active:scale-95 border-primary/10"
-           >
-              <div className="bg-primary/10 p-5 rounded-2xl text-primary group-hover:scale-110 group-hover:rotate-6 transition-all shadow-inner">
-                <Share2 size={32} />
-              </div>
-              <div className="text-left">
-                <h3 className="text-2xl font-black text-foreground">Bagikan Hasil</h3>
-                <p className="text-muted-foreground font-bold">Pamerkan skormu! ✨</p>
-              </div>
-           </Card>
+        <div className="flex justify-center">
            <Card 
             onClick={() => setShowScoreboard(true)}
-            className="p-8 flex flex-row items-center gap-6 border-4 rounded-[2.5rem] hover:bg-accent/5 transition-all cursor-pointer group shadow-xl hover:shadow-accent/20 active:scale-95 border-accent/10"
+            className="w-full max-w-md p-8 flex flex-row items-center gap-6 border-4 rounded-[2.5rem] hover:bg-accent/5 transition-all cursor-pointer group shadow-xl hover:shadow-accent/20 active:scale-95 border-accent/10"
            >
               <div className="bg-accent/10 p-5 rounded-2xl text-accent group-hover:scale-110 group-hover:-rotate-6 transition-all shadow-inner">
                 <Trophy size={32} />
               </div>
               <div className="text-left">
                 <h3 className="text-2xl font-black text-foreground">Papan Skor</h3>
-                <p className="text-muted-foreground font-bold">Peringkat {currentClassName}</p>
+                <p className="text-muted-foreground font-bold">Lihat peringkat {currentClassName}</p>
               </div>
            </Card>
         </div>
