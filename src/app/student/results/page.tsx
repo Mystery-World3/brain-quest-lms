@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, XCircle, Trophy, Home, Share2, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function ResultsPage() {
   const router = useRouter();
@@ -32,6 +33,11 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center">
+      {/* Universal Theme Toggle for Students */}
+      <div className="fixed top-6 right-6 z-50">
+        <ThemeToggle />
+      </div>
+
       <div className="w-full max-w-3xl space-y-8 pb-32">
         {/* Celeb Header */}
         <div className={cn(
@@ -42,10 +48,10 @@ export default function ResultsPage() {
             <Trophy size={200} />
           </div>
           <div className="relative z-10 flex flex-col items-center">
-            <div className="bg-white/20 p-4 rounded-3xl mb-6 backdrop-blur-sm">
+            <div className="bg-white/20 p-4 rounded-3xl mb-6 backdrop-blur-sm animate-bounce">
                <Award size={48} className="text-white" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-headline font-black mb-3">
+            <h1 className="text-4xl md:text-5xl font-headline font-black mb-3 drop-shadow-lg">
               {isHighPerformance ? 'Hebat Sekali!' : 'Terus Semangat!'}
             </h1>
             <p className="text-white/80 text-lg font-medium mb-10 max-w-md mx-auto">
@@ -54,9 +60,9 @@ export default function ResultsPage() {
                 : 'Jangan menyerah ya! Setiap kesalahan adalah pelajaran berharga untuk jadi lebih pintar.'}
             </p>
             
-            <div className="relative">
+            <div className="relative scale-110">
               <div className="absolute inset-0 bg-white/40 blur-2xl rounded-full scale-110" />
-              <div className="relative inline-flex flex-col items-center justify-center bg-white text-primary rounded-full w-48 h-48 shadow-2xl border-[12px] border-primary/20">
+              <div className="relative inline-flex flex-col items-center justify-center bg-white text-primary rounded-full w-48 h-48 shadow-2xl border-[12px] border-primary/20 animate-in zoom-in duration-700">
                 <span className="text-6xl font-black">{Math.round(result.score)}</span>
                 <span className="text-sm font-black uppercase tracking-[0.2em]">SKOR</span>
               </div>
@@ -66,13 +72,13 @@ export default function ResultsPage() {
 
         {/* Action Buttons Header */}
         <div className="grid grid-cols-2 gap-4">
-           <Card className="p-6 flex flex-col items-center gap-2 border-2 hover:bg-primary/5 transition-colors cursor-pointer group">
+           <Card className="p-6 flex flex-col items-center gap-2 border-2 rounded-[2rem] hover:bg-primary/5 transition-all cursor-pointer group active:scale-95">
               <div className="bg-primary/10 p-3 rounded-2xl text-primary group-hover:scale-110 transition-transform">
                 <Share2 size={24} />
               </div>
-              <span className="font-bold">Bagikan</span>
+              <span className="font-bold">Bagikan Hasil</span>
            </Card>
-           <Card className="p-6 flex flex-col items-center gap-2 border-2 hover:bg-accent/5 transition-colors cursor-pointer group">
+           <Card className="p-6 flex flex-col items-center gap-2 border-2 rounded-[2rem] hover:bg-accent/5 transition-all cursor-pointer group active:scale-95">
               <div className="bg-accent/10 p-3 rounded-2xl text-accent group-hover:scale-110 transition-transform">
                 <Trophy size={24} />
               </div>
@@ -90,13 +96,13 @@ export default function ResultsPage() {
               const isCorrect = result.answers[i] === q.correctAnswer;
               return (
                 <Card key={q.id} className={cn(
-                  "border-2 rounded-3xl shadow-md transition-all duration-300",
+                  "border-2 rounded-3xl shadow-md transition-all duration-300 student-card-hover",
                   isCorrect ? "hover:border-green-500/50" : "hover:border-red-500/50"
                 )}>
                   <div className="p-6 flex gap-4 md:gap-6">
                     <div className={cn(
                       "w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center font-black text-xl",
-                      isCorrect ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+                      isCorrect ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
                     )}>
                       {i + 1}
                     </div>
@@ -106,11 +112,11 @@ export default function ResultsPage() {
                           {q.text}
                         </h3>
                         {isCorrect ? (
-                          <Badge className="bg-green-100 text-green-700 border-none shrink-0 py-1.5 px-3 rounded-xl font-bold">
+                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 border-none shrink-0 py-1.5 px-3 rounded-xl font-bold">
                             <CheckCircle2 size={16} className="mr-1" /> BENAR
                           </Badge>
                         ) : (
-                          <Badge className="bg-red-100 text-red-700 border-none shrink-0 py-1.5 px-3 rounded-xl font-bold">
+                          <Badge className="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 border-none shrink-0 py-1.5 px-3 rounded-xl font-bold">
                             <XCircle size={16} className="mr-1" /> SALAH
                           </Badge>
                         )}
@@ -119,7 +125,7 @@ export default function ResultsPage() {
                       <div className="grid gap-2 text-sm md:text-base">
                         <div className={cn(
                           "p-4 rounded-2xl border-2 flex flex-col gap-1",
-                          isCorrect ? "bg-green-50/50 border-green-200" : "bg-red-50/50 border-red-200"
+                          isCorrect ? "bg-green-50/50 border-green-200 dark:bg-green-900/10 dark:border-green-800" : "bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-800"
                         )}>
                           <span className="text-xs font-bold uppercase tracking-widest opacity-60">Jawaban Kamu</span>
                           <span className="font-bold">
@@ -128,9 +134,9 @@ export default function ResultsPage() {
                         </div>
                         
                         {!isCorrect && (
-                          <div className="p-4 rounded-2xl border-2 border-green-200 bg-green-50/30 flex flex-col gap-1">
+                          <div className="p-4 rounded-2xl border-2 border-green-200 bg-green-50/30 dark:border-green-800 dark:bg-green-900/5 flex flex-col gap-1">
                             <span className="text-xs font-bold uppercase tracking-widest text-green-600 opacity-80">Jawaban Yang Benar</span>
-                            <span className="font-bold text-green-700">{q.options[q.correctAnswer]}</span>
+                            <span className="font-bold text-green-700 dark:text-green-400">{q.options[q.correctAnswer]}</span>
                           </div>
                         )}
                       </div>

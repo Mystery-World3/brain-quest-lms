@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight, Send, Timer, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function QuizPage() {
   const { classId } = useParams();
@@ -82,6 +83,11 @@ export default function QuizPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center">
+      {/* Universal Theme Toggle for Students */}
+      <div className="fixed top-6 right-6 z-50">
+        <ThemeToggle />
+      </div>
+
       <div className="w-full max-w-3xl space-y-6">
         {/* Animated Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center bg-card p-6 rounded-3xl shadow-xl border-2 border-primary/10 gap-4">
