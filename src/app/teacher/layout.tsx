@@ -22,7 +22,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   if (pathname.includes('login')) return <>{children}</>;
 
   const navItems = [
-    { name: 'Ringkasan', path: '/teacher/dashboard', icon: LayoutDashboard },
+    { name: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard },
     { name: 'Manajemen Soal', path: '/teacher/quizzes', icon: ClipboardList },
     { name: 'Nilai Siswa', path: '/teacher/scores', icon: Users },
   ];
