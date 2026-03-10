@@ -29,17 +29,19 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
   ];
 
   const NavContent = () => (
-    <div className="flex flex-col h-full bg-card">
+    <div className="flex flex-col h-full bg-card border-r border-border/50">
       <div className="p-8 flex items-center gap-4">
         <div className="bg-primary p-2.5 rounded-xl text-white shadow-lg shadow-primary/20">
           <GraduationCap size={24} />
         </div>
         <span className="font-headline font-black text-xl text-primary tracking-tighter">GURU PANEL</span>
       </div>
-      <nav className="flex-1 px-4 space-y-3 py-6">
+      
+      <div className="flex-1 px-4 space-y-2 py-6 overflow-y-auto">
+        <p className="px-5 text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-4">Navigasi Utama</p>
         {navItems.map((item) => (
           <Link key={item.path} href={item.path}>
-            <div className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${
+            <div className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 cursor-pointer ${
               pathname === item.path 
                 ? 'bg-primary text-white shadow-xl shadow-primary/30 scale-[1.02]' 
                 : 'text-muted-foreground hover:bg-primary/10 hover:text-primary font-bold'
@@ -49,30 +51,33 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
             </div>
           </Link>
         ))}
-      </nav>
-      <div className="p-6 border-t border-border/50 space-y-6">
-        <div className="flex items-center justify-between px-4 bg-muted/50 py-3 rounded-2xl">
-          <span className="text-sm font-black uppercase tracking-widest text-muted-foreground">Mode Tema</span>
-          <ThemeToggle />
+      </div>
+
+      <div className="p-6 mt-auto">
+        <div className="bg-muted/30 rounded-[2rem] p-4 border border-border/50 space-y-4">
+          <div className="flex items-center justify-between px-2">
+            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tampilan</span>
+            <ThemeToggle />
+          </div>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 h-14 rounded-2xl font-black text-lg transition-all"
+            onClick={() => {
+              localStorage.removeItem('teacher_session');
+              router.push('/');
+            }}
+          >
+            <LogOut className="mr-4" size={24} /> Keluar
+          </Button>
         </div>
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 h-14 rounded-2xl font-black text-lg"
-          onClick={() => {
-            localStorage.removeItem('teacher_session');
-            router.push('/');
-          }}
-        >
-          <LogOut className="mr-4" size={24} /> Keluar
-        </Button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="w-80 bg-card border-r border-border/50 hidden md:flex flex-col shadow-2xl z-20">
+      <aside className="w-80 hidden md:flex flex-col z-20 shadow-2xl">
         <NavContent />
       </aside>
 
@@ -94,18 +99,15 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
               {navItems.find(item => item.path === pathname)?.name || 'Dashboard'}
             </h2>
           </div>
-          <div className="flex items-center gap-6">
-             <div className="hidden md:flex items-center bg-muted/50 p-1 rounded-full">
-               <ThemeToggle />
-             </div>
+          <div className="flex items-center gap-4">
              <div className="flex items-center gap-3 px-5 py-2.5 bg-primary/10 rounded-2xl text-primary ring-2 ring-primary/5 shadow-inner">
                 <Users size={20} />
-                <span className="text-xs font-black uppercase tracking-[0.2em]">Guru Aktif</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em] hidden lg:inline">Guru Aktif</span>
              </div>
           </div>
         </header>
         <div className="flex-1 overflow-auto p-6 md:p-10 bg-muted/20">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
           </div>
         </div>
