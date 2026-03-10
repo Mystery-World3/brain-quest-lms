@@ -1,0 +1,17 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "edu-hero",
+      "description": "Student studying with digital tools",
+      "imageUrl": "https://picsum.photos/seed/edu1/1200/800",
+      "imageHint": "education technology"
+    },
+    {
+      "id": "teacher-dashboard",
+      "description": "Teacher analyzing student progress",
+      "imageUrl": "https://picsum.photos/seed/edu2/800/600",
+      "imageHint": "data analysis"
+    }
+  ]
+}
