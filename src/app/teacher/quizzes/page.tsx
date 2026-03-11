@@ -187,6 +187,7 @@ export default function QuizManagement() {
           variant="ghost" 
           size="sm" 
           className="h-10 w-10 p-0 text-white font-black text-sm hover:bg-primary hover:text-white transition-all rounded-lg"
+          onPointerDown={(e) => e.preventDefault()}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -206,7 +207,12 @@ export default function QuizManagement() {
           <Sigma className="w-5 h-5 text-primary" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-fit p-0 border-none bg-transparent" side="top" align="end">
+      <PopoverContent 
+        className="w-fit p-0 border-none bg-transparent" 
+        side="top" 
+        align="end"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <MathKeyboard onSelect={onSelect} />
       </PopoverContent>
     </Popover>
