@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, BookOpen, Save, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -24,8 +24,8 @@ export default function QuizManagement() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
   const [editingQuiz, setEditingQuiz] = useState<Partial<Quiz> | null>(null);
+  const [bulkCount, setBulkCount] = useState<number>(1);
   
-  // Load data from localStorage on mount
   useEffect(() => {
     const savedQuizzes = localStorage.getItem('app_quizzes');
     const savedClasses = localStorage.getItem('app_classes');
@@ -44,7 +44,6 @@ export default function QuizManagement() {
     }
   }, []);
 
-  // Save to localStorage whenever quizzes change
   const saveQuizzes = (newQuizzes: Quiz[]) => {
     setQuizzes(newQuizzes);
     localStorage.setItem('app_quizzes', JSON.stringify(newQuizzes));
@@ -70,6 +69,7 @@ export default function QuizManagement() {
   };
 
   const openAddDialog = () => {
+    setBulkCount(1);
     setEditingQuiz({
       id: `quiz-${Date.now()}`,
       title: '',
@@ -80,6 +80,7 @@ export default function QuizManagement() {
   };
 
   const openEditDialog = (quiz: Quiz) => {
+    setBulkCount(1);
     setEditingQuiz({ ...quiz });
     setIsDialogOpen(true);
   };
@@ -104,16 +105,22 @@ export default function QuizManagement() {
     toast({ title: "Berhasil Disimpan", description: `Kuis "${editingQuiz.title}" telah diperbarui.` });
   };
 
-  const addQuestion = () => {
+  const addQuestions = (count: number) => {
     if (editingQuiz) {
       const newQuestions = [...(editingQuiz.questions || [])];
-      newQuestions.push({
-        id: `q-${Date.now()}`,
-        text: '',
-        options: ['', '', '', ''],
-        correctAnswer: 0
-      });
+      for (let i = 0; i < count; i++) {
+        newQuestions.push({
+          id: `q-${Date.now()}-${i}`,
+          text: '',
+          options: ['', '', '', ''],
+          correctAnswer: 0
+        });
+      }
       setEditingQuiz({ ...editingQuiz, questions: newQuestions });
+      toast({
+        title: "Soal Ditambahkan",
+        description: `${count} butir soal baru telah ditambahkan ke daftar.`
+      });
     }
   };
 
@@ -211,7 +218,7 @@ export default function QuizManagement() {
           <div className="bg-primary p-8 text-white sticky top-0 z-10">
             <DialogHeader>
               <DialogTitle className="text-3xl font-headline font-black">
-                {editingQuiz?.id ? 'Edit Kuis' : 'Buat Kuis Baru'}
+                {editingQuiz?.id?.includes('quiz-') ? 'Edit Kuis' : 'Buat Kuis Baru'}
               </DialogTitle>
               <DialogDescription className="text-white/80 font-bold text-lg">Sesuaikan informasi dan butir soal di bawah ini.</DialogDescription>
             </DialogHeader>
@@ -241,57 +248,80 @@ export default function QuizManagement() {
             </div>
 
             <div className="space-y-6">
-              <div className="flex justify-between items-center border-b-2 border-dashed pb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-dashed pb-6 gap-4">
                 <h3 className="text-xl font-black text-primary uppercase tracking-widest flex items-center gap-2">
                   <BookOpen size={24} /> Butir Soal ({editingQuiz?.questions?.length || 0})
                 </h3>
-                <Button onClick={addQuestion} variant="outline" className="rounded-xl font-bold border-2">
-                  <Plus className="mr-2" /> Tambah Soal
-                </Button>
+                <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-2xl border-2 border-primary/10">
+                  <div className="flex items-center gap-2 px-3">
+                    <ListPlus size={18} className="text-primary" />
+                    <Input 
+                      type="number" 
+                      min={1} 
+                      max={20}
+                      value={bulkCount}
+                      onChange={(e) => setBulkCount(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-16 h-10 font-black text-center border-2 rounded-lg"
+                    />
+                  </div>
+                  <Button 
+                    onClick={() => addQuestions(bulkCount)} 
+                    variant="default" 
+                    className="rounded-xl font-bold h-10 shadow-md"
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Tambah {bulkCount > 1 ? bulkCount : ''} Soal
+                  </Button>
+                </div>
               </div>
 
               {editingQuiz?.questions?.map((q, qIdx) => (
-                <Card key={q.id} className="border-2 rounded-2xl overflow-hidden shadow-sm">
-                  <CardHeader className="bg-muted/30 py-4 px-6 flex flex-row justify-between items-center">
+                <Card key={q.id} className="border-2 rounded-2xl overflow-hidden shadow-sm student-card-hover group">
+                  <CardHeader className="bg-muted/30 py-4 px-6 flex flex-row justify-between items-center transition-colors group-hover:bg-primary/5">
                     <span className="font-black text-lg">Soal #{qIdx + 1}</span>
                     <Button 
                       variant="ghost" 
                       size="icon" 
                       onClick={() => removeQuestion(qIdx)}
-                      className="text-red-500 hover:bg-red-50"
+                      className="text-red-500 hover:bg-red-50 hover:text-red-600"
                       disabled={editingQuiz.questions!.length <= 1}
                     >
                       <Trash2 size={20} />
                     </Button>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
-                    <Input 
-                      placeholder="Pertanyaan..." 
-                      value={q.text}
-                      onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
-                      className="h-12 font-bold text-lg border-2" 
-                    />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Pertanyaan</label>
+                       <Input 
+                        placeholder="Masukkan teks pertanyaan di sini..." 
+                        value={q.text}
+                        onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
+                        className="h-12 font-bold text-lg border-2 focus:ring-primary/20" 
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                       {q.options.map((opt, oIdx) => (
-                        <div key={oIdx} className="flex gap-2 items-center">
-                          <Button 
-                            variant={q.correctAnswer === oIdx ? "default" : "outline"}
-                            size="icon"
-                            className="shrink-0 h-10 w-10 rounded-lg font-black"
-                            onClick={() => updateQuestion(qIdx, 'correctAnswer', oIdx)}
-                          >
-                            {String.fromCharCode(65 + oIdx)}
-                          </Button>
-                          <Input 
-                            placeholder={`Pilihan ${String.fromCharCode(65 + oIdx)}`}
-                            value={opt}
-                            onChange={(e) => {
-                              const newOpts = [...q.options];
-                              newOpts[oIdx] = e.target.value;
-                              updateQuestion(qIdx, 'options', newOpts);
-                            }}
-                            className="h-10"
-                          />
+                        <div key={oIdx} className="space-y-1">
+                          <div className="flex gap-2 items-center">
+                            <Button 
+                              variant={q.correctAnswer === oIdx ? "default" : "outline"}
+                              size="icon"
+                              className="shrink-0 h-10 w-10 rounded-lg font-black border-2"
+                              onClick={() => updateQuestion(qIdx, 'correctAnswer', oIdx)}
+                              title="Tandai sebagai jawaban benar"
+                            >
+                              {String.fromCharCode(65 + oIdx)}
+                            </Button>
+                            <Input 
+                              placeholder={`Pilihan ${String.fromCharCode(65 + oIdx)}`}
+                              value={opt}
+                              onChange={(e) => {
+                                const newOpts = [...q.options];
+                                newOpts[oIdx] = e.target.value;
+                                updateQuestion(qIdx, 'options', newOpts);
+                              }}
+                              className={`h-10 font-medium ${q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : ''}`}
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
