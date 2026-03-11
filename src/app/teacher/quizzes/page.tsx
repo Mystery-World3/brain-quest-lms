@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus, Type, List, Upload, Info, Check, Sigma } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Save, Upload, Info, Check, Sigma, Type, List } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -175,6 +175,11 @@ export default function QuizManagement() {
   };
 
   const handleBulkUpload = () => {
+    if (!uploadJson.trim()) {
+      toast({ variant: "destructive", title: "Data Kosong", description: "Harap tempelkan data JSON soal." });
+      return;
+    }
+
     try {
       const parsed = JSON.parse(uploadJson);
       if (!Array.isArray(parsed)) throw new Error("Format harus berupa array []");
@@ -184,8 +189,8 @@ export default function QuizManagement() {
           id: `q-bulk-${Date.now()}-${i}`,
           type: q.type || 'multiple-choice',
           text: q.text || '',
-          options: q.options || ['', '', '', ''],
-          correctAnswer: q.correctAnswer ?? 0
+          options: q.options || (q.type === 'short-answer' ? [] : ['', '', '', '']),
+          correctAnswer: q.correctAnswer ?? (q.type === 'short-answer' ? '' : 0)
         }));
 
         setEditingQuiz({
@@ -194,10 +199,10 @@ export default function QuizManagement() {
         });
         setIsUploadOpen(false);
         setUploadJson('');
-        toast({ title: "Upload Berhasil", description: `${validatedQuestions.length} soal telah ditambahkan.` });
+        toast({ title: "Upload Berhasil", description: `${validatedQuestions.length} soal telah ditambahkan ke kuis.` });
       }
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Upload Gagal", description: "Pastikan format JSON benar." });
+      toast({ variant: "destructive", title: "Upload Gagal", description: "Pastikan format JSON sudah benar sesuai contoh." });
     }
   };
 
@@ -225,7 +230,7 @@ export default function QuizManagement() {
     <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
-          <h1 className="text-3xl md:text-4xl font-headline font-black text-foreground tracking-tighter">Manajemen Kuis</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-black text-foreground tracking-tighter text-primary">Manajemen Kuis</h1>
           <p className="text-base md:text-lg font-bold text-muted-foreground mt-1">Kelola bank soal untuk setiap jenjang kelas.</p>
         </div>
         
@@ -312,7 +317,7 @@ export default function QuizManagement() {
                 variant="outline" 
                 className="bg-white/5 border-white/10 text-white hover:bg-white/10 hidden sm:flex h-12 rounded-xl"
               >
-                <Upload className="mr-2 h-4 w-4" /> Upload Soal
+                <Upload className="mr-2 h-4 w-4" /> Upload Soal JSON
               </Button>
             </DialogHeader>
           </div>
@@ -321,7 +326,16 @@ export default function QuizManagement() {
             <div className="space-y-10 pb-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/60 ml-1">Jenjang Kelas</label>
+                  <label className="text-xs font-black uppercase tracking-widest text-white/60 ml-1">Judul Kuis</label>
+                  <Input 
+                    placeholder="Contoh: Matematika - Persamaan Kuadrat" 
+                    value={editingQuiz?.title || ''}
+                    onChange={(e) => setEditingQuiz({ ...editingQuiz!, title: e.target.value })}
+                    className="h-14 rounded-xl border-white/10 bg-white/5 font-bold text-lg text-white" 
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-xs font-black uppercase tracking-widest text-white/60 ml-1">Pilih Kelas</label>
                   <Select value={editingQuiz?.classId || ''} onValueChange={(val) => setEditingQuiz({ ...editingQuiz!, classId: val })}>
                     <SelectTrigger className="h-14 rounded-xl border-white/10 bg-white/5 font-bold text-lg text-white">
                       <SelectValue placeholder="Pilih Kelas" />
@@ -331,29 +345,21 @@ export default function QuizManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/60 ml-1">Tipe Soal Default</label>
-                  <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10">
-                    <Button variant="ghost" className="flex-1 bg-primary text-white rounded-xl h-11 font-black"><List size={18} className="mr-2" /> PG</Button>
-                    <Button variant="ghost" className="flex-1 text-white/40 hover:text-white rounded-xl h-11 font-black"><Sigma size={18} className="mr-2" /> MTK</Button>
-                    <Button variant="ghost" className="flex-1 text-white/40 hover:text-white rounded-xl h-11 font-black"><Type size={18} className="mr-2" /> TEKS</Button>
-                  </div>
-                </div>
               </div>
 
-              <div className="space-y-8">
+              <div className="space-y-12">
                 {editingQuiz?.questions?.map((q, qIdx) => (
-                  <div key={q.id} className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                  <div key={q.id} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 bg-white/5 p-8 rounded-[2rem] border border-white/5 relative">
                     <div className="flex items-center justify-between border-b border-white/5 pb-4">
                        <h3 className="text-xl font-black text-white flex items-center gap-3">
-                         Isi Pertanyaan <span className="text-white/20 text-sm">#{qIdx + 1}</span>
+                         Soal <span className="text-primary">#{qIdx + 1}</span>
                        </h3>
                        <div className="flex items-center gap-2">
                           <Tabs 
                             value={q.type} 
                             onValueChange={(val) => updateQuestion(qIdx, 'type', val as QuestionType)}
                           >
-                            <TabsList className="bg-white/5 border border-white/10 rounded-xl h-10">
+                            <TabsList className="bg-white/10 border border-white/10 rounded-xl h-10 p-1">
                               <TabsTrigger value="multiple-choice" className="data-[state=active]:bg-primary rounded-lg text-xs font-black">PG</TabsTrigger>
                               <TabsTrigger value="short-answer" className="data-[state=active]:bg-primary rounded-lg text-xs font-black">Isian</TabsTrigger>
                             </TabsList>
@@ -362,7 +368,7 @@ export default function QuizManagement() {
                             variant="ghost" 
                             size="icon" 
                             onClick={() => removeQuestion(qIdx)}
-                            className="text-red-400 hover:bg-red-400/10 h-10 w-10"
+                            className="text-red-400 hover:bg-red-400/10 h-10 w-10 rounded-xl"
                             disabled={editingQuiz.questions!.length <= 1}
                           >
                             <Trash2 size={18} />
@@ -370,69 +376,69 @@ export default function QuizManagement() {
                        </div>
                     </div>
 
+                    {/* PERTANYAAN */}
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 text-white/40">
-                         <Sigma size={14} />
-                         <span className="text-[10px] font-black uppercase tracking-widest">Simbol Untuk Pertanyaan</span>
+                         <Sigma size={14} className="text-primary" />
+                         <span className="text-[10px] font-black uppercase tracking-widest">Keyboard Matematika (Pertanyaan)</span>
                       </div>
-                      
                       <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'text', s)} />
-                      
                       <Input 
-                        placeholder="Contoh: Jika x₁ = 4 dan x₂ = 6, maka..." 
+                        placeholder="Ketik pertanyaan di sini..." 
                         value={q.text}
                         onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
-                        className="h-16 rounded-2xl bg-white/5 border-white/10 font-medium text-lg text-white placeholder:text-white/20 px-6 focus:ring-primary/40" 
+                        className="h-16 rounded-2xl bg-white/10 border-white/10 font-medium text-lg text-white placeholder:text-white/20 px-6 focus:ring-primary/40 focus:border-primary" 
                       />
                     </div>
                     
-                    <div className="space-y-4 pt-4">
-                      <h4 className="text-sm font-black text-white uppercase tracking-widest">
-                        Opsi Jawaban <span className="text-white/40 normal-case font-bold">(Klik ikon ceklis untuk jawaban benar)</span>
+                    {/* OPSI / JAWABAN */}
+                    <div className="space-y-6">
+                      <h4 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                        <Check size={16} className="text-primary" /> Konfigurasi Jawaban
                       </h4>
                       
                       {q.type === 'multiple-choice' ? (
-                        <div className="space-y-3">
+                        <div className="grid grid-cols-1 gap-6">
                           {q.options.map((opt, oIdx) => (
-                            <div key={oIdx} className="flex gap-3 group">
-                              <Button 
-                                variant={q.correctAnswer === oIdx ? "default" : "ghost"}
-                                size="icon"
-                                className={cn(
-                                  "shrink-0 h-14 w-14 rounded-2xl border transition-all",
-                                  q.correctAnswer === oIdx 
-                                    ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" 
-                                    : "bg-white/5 border-white/10 text-white/20 hover:text-white hover:bg-white/10"
-                                )}
-                                onClick={() => updateQuestion(qIdx, 'correctAnswer', oIdx)}
-                              >
-                                <Check size={24} className={q.correctAnswer === oIdx ? "scale-110" : "scale-90 opacity-40"} />
-                              </Button>
-                              <div className="flex-1 space-y-2">
+                            <div key={oIdx} className="space-y-3">
+                              <div className="flex gap-3">
+                                <Button 
+                                  variant={q.correctAnswer === oIdx ? "default" : "ghost"}
+                                  size="icon"
+                                  className={cn(
+                                    "shrink-0 h-14 w-14 rounded-2xl border transition-all",
+                                    q.correctAnswer === oIdx 
+                                      ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" 
+                                      : "bg-white/5 border-white/10 text-white/20 hover:text-white hover:bg-white/10"
+                                  )}
+                                  onClick={() => updateQuestion(qIdx, 'correctAnswer', oIdx)}
+                                >
+                                  {q.correctAnswer === oIdx ? <Check size={24} /> : <span className="font-black text-sm">{String.fromCharCode(65 + oIdx)}</span>}
+                                </Button>
                                 <Input 
-                                  placeholder={`Opsi ${oIdx + 1}`}
+                                  placeholder={`Opsi ${String.fromCharCode(65 + oIdx)}`}
                                   value={opt}
                                   onChange={(e) => {
                                     const newOpts = [...q.options];
                                     newOpts[oIdx] = e.target.value;
                                     updateQuestion(qIdx, 'options', newOpts);
                                   }}
-                                  className="h-14 bg-white/5 border-white/10 rounded-2xl text-white font-medium px-6 focus:ring-primary/40"
+                                  className="h-14 bg-white/5 border-white/10 rounded-2xl text-white font-medium px-6 focus:ring-primary/40 focus:border-primary"
                                 />
-                                <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'option', s, oIdx)} />
                               </div>
+                              <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'option', s, oIdx)} />
                             </div>
                           ))}
                         </div>
                       ) : (
                         <div className="space-y-4">
-                           <div className="flex bg-white/5 p-4 rounded-2xl border border-white/10 items-center gap-4">
-                              <div className="bg-primary p-3 rounded-xl text-white">
+                           <div className="flex bg-primary/10 p-4 rounded-2xl border border-primary/20 items-center gap-4">
+                              <div className="bg-primary p-3 rounded-xl text-white shadow-lg">
                                 <Check size={20} />
                               </div>
                               <div className="flex-1">
                                 <Input 
-                                  placeholder="Masukkan kunci jawaban..." 
+                                  placeholder="Ketik kunci jawaban isian..." 
                                   value={q.correctAnswer as string}
                                   onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
                                   className="bg-transparent border-none text-xl font-black text-white placeholder:text-white/20 focus-visible:ring-0 p-0 h-auto" 
@@ -447,21 +453,24 @@ export default function QuizManagement() {
                 ))}
 
                 <div className="flex justify-center pt-8">
-                  <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10">
-                    <Input 
-                      type="number" 
-                      min={1} 
-                      max={20}
-                      value={bulkCount}
-                      onChange={(e) => setBulkCount(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-16 h-12 font-black text-center bg-white/5 border-white/10 rounded-xl"
-                    />
+                  <div className="flex items-center gap-3 bg-white/5 p-3 rounded-[2rem] border border-white/10 shadow-2xl">
+                    <div className="flex flex-col items-center px-4">
+                      <span className="text-[10px] font-black text-white/40 uppercase mb-1">Jumlah</span>
+                      <Input 
+                        type="number" 
+                        min={1} 
+                        max={20}
+                        value={bulkCount}
+                        onChange={(e) => setBulkCount(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-16 h-10 font-black text-center bg-white/10 border-white/10 rounded-xl"
+                      />
+                    </div>
                     <Button 
                       onClick={() => addQuestions(bulkCount)} 
                       variant="outline" 
-                      className="rounded-xl font-black h-12 bg-white/5 border-white/10 hover:bg-white/10 text-white"
+                      className="rounded-2xl font-black h-14 px-8 bg-primary hover:bg-primary/90 border-none text-white shadow-xl shadow-primary/20"
                     >
-                      <Plus className="mr-2 h-4 w-4" /> {bulkCount > 1 ? `+${bulkCount}` : '+1'} Soal Baru
+                      <Plus className="mr-2 h-5 w-5" /> {bulkCount > 1 ? `Tambah ${bulkCount} Soal` : 'Tambah 1 Soal Baru'}
                     </Button>
                   </div>
                 </div>
@@ -469,37 +478,42 @@ export default function QuizManagement() {
             </div>
           </ScrollArea>
 
-          <DialogFooter className="p-6 md:p-8 bg-white/5 border-t border-white/5 flex flex-col sm:flex-row gap-3 shrink-0">
+          <DialogFooter className="p-6 md:p-8 bg-white/5 border-t border-white/5 flex flex-col sm:flex-row gap-4 shrink-0">
             <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-2xl font-black text-lg text-white/40 hover:text-white hover:bg-white/5 w-full sm:w-auto order-2 sm:order-1">
               Batal
             </Button>
             <Button onClick={handleSaveQuiz} className="h-14 px-12 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 text-white w-full sm:w-auto order-1 sm:order-2">
-              <Save className="mr-2" /> Simpan Kuis
+              <Save className="mr-2" /> Simpan Seluruh Kuis
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Upload Dialog */}
+      {/* UPLOAD DIALOG */}
       <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
         <DialogContent className="max-w-2xl rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-[#0a0c10] text-white">
-          <div className="bg-primary p-10 text-white">
-            <div className="flex items-center gap-4">
-               <div className="bg-white/20 p-4 rounded-2xl">
+          <div className="bg-primary p-10 text-white relative">
+            <div className="absolute top-0 right-0 p-8 opacity-10">
+               <Upload size={120} />
+            </div>
+            <div className="flex items-center gap-6 relative z-10">
+               <div className="bg-white/20 p-5 rounded-[1.5rem] shadow-inner ring-4 ring-white/10">
                  <Upload size={32} />
                </div>
                <div>
-                  <DialogTitle className="text-3xl font-black">Upload Banyak Soal</DialogTitle>
-                  <DialogDescription className="text-white/60 font-bold text-lg">Tempelkan data soal dalam format JSON di bawah ini.</DialogDescription>
+                  <DialogTitle className="text-3xl font-black tracking-tight">Impor Bank Soal</DialogTitle>
+                  <DialogDescription className="text-white/60 font-bold text-lg">Gunakan format JSON untuk menambah banyak soal secara instan.</DialogDescription>
                </div>
             </div>
           </div>
-          <div className="p-10 space-y-6">
-            <div className="bg-white/5 p-6 rounded-2xl border border-white/10 space-y-3">
-               <div className="flex items-center gap-2 text-primary font-black text-xs uppercase tracking-widest">
-                  <Info size={14} /> Contoh Format JSON
+          
+          <div className="p-10 space-y-8">
+            <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4 shadow-inner">
+               <div className="flex items-center gap-2 text-primary font-black text-xs uppercase tracking-[0.2em]">
+                  <Info size={16} /> Contoh Struktur Data
                </div>
-               <pre className="text-[11px] font-mono bg-black/40 p-4 rounded-xl overflow-auto text-white/60 leading-relaxed border border-white/5">
+               <ScrollArea className="h-40">
+                <pre className="text-[11px] font-mono bg-black/40 p-5 rounded-2xl text-white/60 leading-relaxed border border-white/5">
 {`[
   {
     "type": "multiple-choice",
@@ -513,18 +527,35 @@ export default function QuizManagement() {
     "correctAnswer": "Thomas Edison"
   }
 ]`}
-               </pre>
+                </pre>
+               </ScrollArea>
             </div>
-            <Textarea 
-              value={uploadJson}
-              onChange={(e) => setUploadJson(e.target.value)}
-              placeholder='Paste JSON di sini...'
-              className="min-h-[250px] font-mono text-sm bg-white/5 border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:ring-primary/40"
-            />
+
+            <div className="space-y-3">
+              <label className="text-xs font-black uppercase tracking-widest text-white/40 ml-1">Tempelkan JSON di sini</label>
+              <Textarea 
+                value={uploadJson}
+                onChange={(e) => setUploadJson(e.target.value)}
+                placeholder='[ { "type": "multiple-choice", ... }, ... ]'
+                className="min-h-[250px] font-mono text-sm bg-white/5 border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:ring-primary/40 focus:border-primary shadow-inner"
+              />
+            </div>
           </div>
-          <DialogFooter className="p-10 bg-white/5 border-t border-white/5 flex gap-3">
-            <Button variant="ghost" onClick={() => setIsUploadOpen(false)} className="h-16 px-10 rounded-2xl font-black text-white/40 hover:text-white">Batal</Button>
-            <Button onClick={handleBulkUpload} className="h-16 px-12 rounded-2xl font-black shadow-2xl bg-primary hover:bg-primary/90 text-white">Mulai Impor Data</Button>
+
+          <DialogFooter className="p-10 bg-white/5 border-t border-white/5 flex flex-row gap-3">
+            <Button 
+              variant="ghost" 
+              onClick={() => setIsUploadOpen(false)} 
+              className="flex-1 h-16 rounded-2xl font-black text-white/40 hover:text-white hover:bg-white/5"
+            >
+              Batal
+            </Button>
+            <Button 
+              onClick={handleBulkUpload} 
+              className="flex-[2] h-16 rounded-2xl font-black shadow-2xl bg-primary hover:bg-primary/90 text-white ring-4 ring-primary/20"
+            >
+              Mulai Impor Data <Check className="ml-2" />
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -534,12 +565,12 @@ export default function QuizManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl font-black text-white">Hapus Kuis?</AlertDialogTitle>
             <AlertDialogDescription className="text-white/40 text-lg font-bold">
-              Tindakan ini tidak dapat dibatalkan. Seluruh data kuis dan progres siswa yang terkait akan ikut terhapus.
+              Tindakan ini tidak dapat dibatalkan. Seluruh data kuis dan progres siswa yang terkait akan ikut terhapus secara permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-8">
             <AlertDialogCancel className="h-14 rounded-2xl font-bold bg-white/5 border-white/10 text-white hover:bg-white/10 w-full sm:w-auto">Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="h-14 rounded-2xl bg-red-600 hover:bg-red-700 font-black text-white w-full sm:w-auto">
+            <AlertDialogAction onClick={confirmDelete} className="h-14 rounded-2xl bg-red-600 hover:bg-red-700 font-black text-white w-full sm:w-auto shadow-xl shadow-red-900/20">
               Hapus Permanen
             </AlertDialogAction>
           </AlertDialogFooter>
