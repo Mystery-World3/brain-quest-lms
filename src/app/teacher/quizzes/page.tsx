@@ -160,17 +160,19 @@ export default function QuizManagement() {
   const appendSymbol = (idx: number, field: string, symbol: string, optionIdx?: number) => {
     if (!editingQuiz || !editingQuiz.questions) return;
     const newQuestions = [...editingQuiz.questions];
+    const currentQuestion = { ...newQuestions[idx] };
     
     if (field === 'text') {
-      newQuestions[idx].text += symbol;
+      currentQuestion.text = (currentQuestion.text || "") + symbol;
     } else if (field === 'option' && typeof optionIdx === 'number') {
-      const newOptions = [...newQuestions[idx].options];
-      newOptions[optionIdx] += symbol;
-      newQuestions[idx].options = newOptions;
-    } else if (field === 'correctAnswer' && newQuestions[idx].type === 'short-answer') {
-      newQuestions[idx].correctAnswer = (newQuestions[idx].correctAnswer as string || '') + symbol;
+      const newOptions = [...currentQuestion.options];
+      newOptions[optionIdx] = (newOptions[optionIdx] || "") + symbol;
+      currentQuestion.options = newOptions;
+    } else if (field === 'correctAnswer' && currentQuestion.type === 'short-answer') {
+      currentQuestion.correctAnswer = (currentQuestion.correctAnswer as string || '') + symbol;
     }
 
+    newQuestions[idx] = currentQuestion;
     setEditingQuiz({ ...editingQuiz, questions: newQuestions });
   };
 
@@ -182,7 +184,10 @@ export default function QuizManagement() {
           variant="ghost" 
           size="sm" 
           className="h-10 w-10 p-0 text-white font-black text-sm hover:bg-primary hover:text-white transition-all rounded-lg"
-          onClick={() => onSelect(sym)}
+          onClick={(e) => {
+            e.preventDefault();
+            onSelect(sym);
+          }}
         >
           {sym}
         </Button>
