@@ -2,8 +2,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { initialQuizzes, classes } from '@/lib/mock-data';
-import { Quiz, Question } from '@/lib/types';
+import { initialQuizzes, classes as initialClasses } from '@/lib/mock-data';
+import { Quiz, Question, Class } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export default function QuizManagement() {
   const { toast } = useToast();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -26,12 +27,20 @@ export default function QuizManagement() {
   
   // Load data from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('app_quizzes');
-    if (saved) {
-      setQuizzes(JSON.parse(saved));
+    const savedQuizzes = localStorage.getItem('app_quizzes');
+    const savedClasses = localStorage.getItem('app_classes');
+
+    if (savedQuizzes) {
+      setQuizzes(JSON.parse(savedQuizzes));
     } else {
       setQuizzes(initialQuizzes);
       localStorage.setItem('app_quizzes', JSON.stringify(initialQuizzes));
+    }
+
+    if (savedClasses) {
+      setClasses(JSON.parse(savedClasses));
+    } else {
+      setClasses(initialClasses);
     }
   }, []);
 

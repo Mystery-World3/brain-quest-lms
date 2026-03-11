@@ -5,7 +5,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { classes, initialQuizzes } from '@/lib/mock-data';
+import { classes as initialClasses, initialQuizzes } from '@/lib/mock-data';
+import { Class } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Download, Search, User, TrendingUp, Trash2, Pencil, Plus, Save, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export default function StudentScores() {
   const { toast } = useToast();
   const [scores, setScores] = useState<any[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -26,9 +28,11 @@ export default function StudentScores() {
   const [editingScore, setEditingScore] = useState<any>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('app_scores');
-    if (saved) {
-      setScores(JSON.parse(saved));
+    const savedScores = localStorage.getItem('app_scores');
+    const savedClasses = localStorage.getItem('app_classes');
+
+    if (savedScores) {
+      setScores(JSON.parse(savedScores));
     } else {
       const mock = [
         { id: '1', name: 'Budi Santoso', classId: '7-a', className: 'Kelas 7 - A', quiz: 'Bilangan Bulat', score: 85, date: '2023-11-20' },
@@ -37,6 +41,12 @@ export default function StudentScores() {
       ];
       setScores(mock);
       localStorage.setItem('app_scores', JSON.stringify(mock));
+    }
+
+    if (savedClasses) {
+      setClasses(JSON.parse(savedClasses));
+    } else {
+      setClasses(initialClasses);
     }
   }, []);
 

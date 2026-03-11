@@ -1,10 +1,11 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, ClipboardList, Users, LogOut, GraduationCap, Menu } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Users, LogOut, GraduationCap, Menu, School } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
@@ -23,6 +24,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
   const navItems = [
     { name: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard },
+    { name: 'Manajemen Kelas', path: '/teacher/classes', icon: School },
     { name: 'Manajemen Soal', path: '/teacher/quizzes', icon: ClipboardList },
     { name: 'Nilai Siswa', path: '/teacher/scores', icon: Users },
   ];

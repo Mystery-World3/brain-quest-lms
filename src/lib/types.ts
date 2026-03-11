@@ -2,6 +2,7 @@
 export type Class = {
   id: string;
   name: string;
+  active: boolean;
 };
 
 export type Question = {

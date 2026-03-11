@@ -1,34 +1,43 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { classes } from '@/lib/mock-data';
+import { classes as initialClasses } from '@/lib/mock-data';
+import { Class } from '@/lib/types';
 import { Users, BookOpen, CheckCircle, TrendingUp, Clock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function TeacherDashboard() {
   const [scores, setScores] = useState<any[]>([]);
   const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
 
   useEffect(() => {
     const savedScores = localStorage.getItem('app_scores');
     const savedQuizzes = localStorage.getItem('app_quizzes');
+    const savedClasses = localStorage.getItem('app_classes');
     
     if (savedScores) setScores(JSON.parse(savedScores));
     if (savedQuizzes) setQuizzes(JSON.parse(savedQuizzes));
+    if (savedClasses) {
+      setClasses(JSON.parse(savedClasses));
+    } else {
+      setClasses(initialClasses);
+    }
   }, []);
 
   // Calculate dynamic stats
-  const totalClasses = classes.length;
-  const activeQuizzes = quizzes.length;
+  const activeClassesCount = classes.filter(c => c.active).length;
+  const activeQuizzesCount = quizzes.length;
   const totalStudentsFinished = scores.length;
   const averageScore = scores.length > 0 
     ? Math.round(scores.reduce((acc, s) => acc + s.score, 0) / scores.length) 
     : 0;
 
   const stats = [
-    { label: 'Total Kelas', value: totalClasses, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: 'Kuis Tersedia', value: activeQuizzes, icon: BookOpen, color: 'text-green-600', bg: 'bg-green-100' },
+    { label: 'Kelas Aktif', value: activeClassesCount, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { label: 'Kuis Tersedia', value: activeQuizzesCount, icon: BookOpen, color: 'text-green-600', bg: 'bg-green-100' },
     { label: 'Siswa Selesai', value: totalStudentsFinished, icon: CheckCircle, color: 'text-purple-600', bg: 'bg-purple-100' },
     { label: 'Rata-rata Skor', value: `${averageScore}%`, icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-100' },
   ];

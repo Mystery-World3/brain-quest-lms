@@ -2,12 +2,12 @@
 import { Class, Quiz } from './types';
 
 export const classes: Class[] = [
-  { id: '7-a', name: 'Kelas 7 - A' },
-  { id: '7-b', name: 'Kelas 7 - B' },
-  { id: '8-a', name: 'Kelas 8 - A' },
-  { id: '8-b', name: 'Kelas 8 - B' },
-  { id: '9-a', name: 'Kelas 9 - A' },
-  { id: '9-b', name: 'Kelas 9 - B' },
+  { id: '7-a', name: 'Kelas 7 - A', active: true },
+  { id: '7-b', name: 'Kelas 7 - B', active: true },
+  { id: '8-a', name: 'Kelas 8 - A', active: true },
+  { id: '8-b', name: 'Kelas 8 - B', active: true },
+  { id: '9-a', name: 'Kelas 9 - A', active: true },
+  { id: '9-b', name: 'Kelas 9 - B', active: true },
 ];
 
 export const initialQuizzes: Quiz[] = [

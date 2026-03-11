@@ -1,10 +1,11 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { classes } from '@/lib/mock-data';
+import { classes as initialClasses } from '@/lib/mock-data';
+import { Class } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,11 +17,19 @@ export default function LandingPage() {
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [studentName, setStudentName] = useState<string>('');
   const [showNameInput, setShowNameInput] = useState(false);
+  const [availableClasses, setAvailableClasses] = useState<Class[]>([]);
   const router = useRouter();
+
+  useEffect(() => {
+    const savedClasses = localStorage.getItem('app_classes');
+    const classesToFilter = savedClasses ? JSON.parse(savedClasses) : initialClasses;
+    // Only show active classes
+    setAvailableClasses(classesToFilter.filter((c: Class) => c.active));
+  }, []);
 
   const handleStart = () => {
     if (selectedClass && studentName) {
-      const className = classes.find(c => c.id === selectedClass)?.name || '';
+      const className = availableClasses.find(c => c.id === selectedClass)?.name || '';
       localStorage.setItem('student_name', studentName);
       localStorage.setItem('student_class', selectedClass);
       localStorage.setItem('student_class_name', className);
@@ -71,11 +80,16 @@ export default function LandingPage() {
                       <SelectValue placeholder="-- Pilih Kelas --" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
-                      {classes.map((cls) => (
+                      {availableClasses.map((cls) => (
                         <SelectItem key={cls.id} value={cls.id} className="h-14 text-lg font-bold">
                           {cls.name}
                         </SelectItem>
                       ))}
+                      {availableClasses.length === 0 && (
+                        <div className="p-4 text-center text-muted-foreground font-bold">
+                          Belum ada kelas aktif.
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
