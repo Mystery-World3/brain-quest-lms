@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -164,7 +163,7 @@ export default function ResultsPage() {
                             ? "bg-green-50/50 border-green-200 dark:bg-green-950/20 dark:border-green-900" 
                             : "bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-900"
                         )}>
-                          <span className="text-xs font-black uppercase tracking-[0.2em] opacity-50">Pilihanmu</span>
+                          <span className="text-xs font-black uppercase tracking-[0.2em] opacity-50">Jawabanmu</span>
                           <span className="text-lg font-black">
                             {q.type === 'multiple-choice' 
                               ? (q.options[result.answers[i]] || 'Kosong')
