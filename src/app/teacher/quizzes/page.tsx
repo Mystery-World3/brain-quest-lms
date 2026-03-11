@@ -158,22 +158,24 @@ export default function QuizManagement() {
   };
 
   const appendSymbol = (idx: number, field: string, symbol: string, optionIdx?: number) => {
-    if (!editingQuiz || !editingQuiz.questions) return;
-    const newQuestions = [...editingQuiz.questions];
-    const currentQuestion = { ...newQuestions[idx] };
-    
-    if (field === 'text') {
-      currentQuestion.text = (currentQuestion.text || "") + symbol;
-    } else if (field === 'option' && typeof optionIdx === 'number') {
-      const newOptions = [...currentQuestion.options];
-      newOptions[optionIdx] = (newOptions[optionIdx] || "") + symbol;
-      currentQuestion.options = newOptions;
-    } else if (field === 'correctAnswer' && currentQuestion.type === 'short-answer') {
-      currentQuestion.correctAnswer = (currentQuestion.correctAnswer as string || '') + symbol;
-    }
+    setEditingQuiz((prev) => {
+      if (!prev || !prev.questions) return prev;
+      const updatedQuestions = [...prev.questions];
+      const q = { ...updatedQuestions[idx] };
 
-    newQuestions[idx] = currentQuestion;
-    setEditingQuiz({ ...editingQuiz, questions: newQuestions });
+      if (field === 'text') {
+        q.text = (q.text || "") + symbol;
+      } else if (field === 'option' && typeof optionIdx === 'number') {
+        const newOptions = [...q.options];
+        newOptions[optionIdx] = (newOptions[optionIdx] || "") + symbol;
+        q.options = newOptions;
+      } else if (field === 'correctAnswer' && q.type === 'short-answer') {
+        q.correctAnswer = (q.correctAnswer as string || '') + symbol;
+      }
+
+      updatedQuestions[idx] = q;
+      return { ...prev, questions: updatedQuestions };
+    });
   };
 
   const MathKeyboard = ({ onSelect }: { onSelect: (s: string) => void }) => (
@@ -181,11 +183,13 @@ export default function QuizManagement() {
       {mathSymbols.map(sym => (
         <Button 
           key={sym} 
+          type="button"
           variant="ghost" 
           size="sm" 
           className="h-10 w-10 p-0 text-white font-black text-sm hover:bg-primary hover:text-white transition-all rounded-lg"
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             onSelect(sym);
           }}
         >
