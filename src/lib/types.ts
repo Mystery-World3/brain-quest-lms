@@ -5,11 +5,14 @@ export type Class = {
   active: boolean;
 };
 
+export type QuestionType = 'multiple-choice' | 'short-answer';
+
 export type Question = {
   id: string;
+  type: QuestionType;
   text: string;
-  options: string[];
-  correctAnswer: number; // Index of the correct option
+  options: string[]; // Digunakan untuk multiple-choice
+  correctAnswer: string | number; // Index untuk multiple-choice, string untuk short-answer
 };
 
 export type Quiz = {
@@ -25,6 +28,6 @@ export type StudentResult = {
   classId: string;
   quizId: string;
   score: number;
-  answers: number[]; // Index of selected options
+  answers: (string | number)[];
   timestamp: string;
 };

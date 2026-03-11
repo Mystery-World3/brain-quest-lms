@@ -10,7 +10,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Send, Timer, Star, CheckCircle2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ChevronLeft, ChevronRight, Send, Timer, Star, CheckCircle2, Type } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -19,7 +20,7 @@ export default function QuizPage() {
   const router = useRouter();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<number[]>([]);
+  const [answers, setAnswers] = useState<(string | number)[]>([]);
   const [studentName, setStudentName] = useState('');
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -27,7 +28,6 @@ export default function QuizPage() {
     const name = localStorage.getItem('student_name') || 'Siswa';
     setStudentName(name);
 
-    // Try loading from localStorage first, then fallback to mock
     const savedQuizzesRaw = localStorage.getItem('app_quizzes');
     let quizzesToSearch = initialQuizzes;
     
@@ -52,9 +52,9 @@ export default function QuizPage() {
   const currentQuestion = quiz.questions[currentIdx];
   const progress = ((currentIdx + 1) / quiz.questions.length) * 100;
 
-  const handleSelectOption = (optionIdx: number) => {
+  const handleUpdateAnswer = (val: string | number) => {
     const newAnswers = [...answers];
-    newAnswers[currentIdx] = optionIdx;
+    newAnswers[currentIdx] = val;
     setAnswers(newAnswers);
   };
 
@@ -81,8 +81,17 @@ export default function QuizPage() {
   const handleFinish = () => {
     let scoreCount = 0;
     quiz.questions.forEach((q, i) => {
-      if (answers[i] === q.correctAnswer) scoreCount++;
+      const studentAnswer = answers[i];
+      if (q.type === 'multiple-choice') {
+        if (studentAnswer === q.correctAnswer) scoreCount++;
+      } else {
+        // Toleransi: abaikan huruf besar kecil dan spasi berlebih
+        const cleanStudent = studentAnswer?.toString().trim().toLowerCase();
+        const cleanCorrect = q.correctAnswer?.toString().trim().toLowerCase();
+        if (cleanStudent === cleanCorrect) scoreCount++;
+      }
     });
+    
     const finalScore = (scoreCount / quiz.questions.length) * 100;
 
     const result = {
@@ -94,7 +103,6 @@ export default function QuizPage() {
       timestamp: new Date().toISOString()
     };
 
-    // Save result to global scores for teacher
     const savedScoresRaw = localStorage.getItem('app_scores');
     const allScores = savedScoresRaw ? JSON.parse(savedScoresRaw) : [];
     
@@ -112,6 +120,8 @@ export default function QuizPage() {
     localStorage.setItem('last_result', JSON.stringify(result));
     router.push('/student/results');
   };
+
+  const isCurrentAnswered = answers[currentIdx] !== -1 && answers[currentIdx] !== '';
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center">
@@ -146,51 +156,71 @@ export default function QuizPage() {
           isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
         )}>
           <CardHeader className="bg-primary/5 border-b border-primary/10 py-12 px-8 md:px-16">
-            <CardTitle className="text-3xl md:text-4xl leading-snug text-foreground font-headline font-black">
-              <span className="bg-primary text-white px-4 py-1 rounded-2xl mr-4 shadow-lg">{currentIdx + 1}</span> 
-              {currentQuestion.text}
+            <CardTitle className="text-3xl md:text-4xl leading-snug text-foreground font-headline font-black flex items-start gap-4">
+              <span className="bg-primary text-white px-4 py-1 rounded-2xl shadow-lg shrink-0">{currentIdx + 1}</span> 
+              <span className="flex-1">{currentQuestion.text}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8 md:p-16">
-            <RadioGroup 
-              value={answers[currentIdx].toString()} 
-              onValueChange={(val) => handleSelectOption(parseInt(val))}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
-            >
-              {currentQuestion.options.map((option, i) => {
-                const isSelected = answers[currentIdx] === i;
-                return (
-                  <div key={i}>
-                    <Label
-                      htmlFor={`opt-${i}`}
-                      className={cn(
-                        "flex items-center gap-6 p-8 rounded-[2rem] border-4 cursor-pointer transition-all duration-300 active:scale-95 group relative overflow-hidden",
-                        isSelected 
-                          ? 'border-primary bg-primary/10 shadow-2xl shadow-primary/20 ring-4 ring-primary/20 translate-y-[-4px]' 
-                          : 'border-border bg-card hover:border-accent hover:bg-accent/5 hover:translate-y-[-2px]'
-                      )}
-                    >
-                      <RadioGroupItem value={i.toString()} id={`opt-${i}`} className="sr-only" />
-                      <div className={cn(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl border-4 transition-all duration-300 group-hover:rotate-6",
-                        isSelected 
-                          ? 'bg-primary border-primary text-white shadow-xl' 
-                          : 'border-muted-foreground/10 text-muted-foreground'
-                      )}>
-                        {String.fromCharCode(65 + i)}
-                      </div>
-                      <span className="text-xl md:text-2xl font-black">{option}</span>
-                      
-                      {isSelected && (
-                        <div className="absolute right-6 top-1/2 -translate-y-1/2 text-primary animate-in fade-in zoom-in">
-                          <CheckCircle2 size={32} />
+            {currentQuestion.type === 'multiple-choice' ? (
+              <RadioGroup 
+                value={answers[currentIdx].toString()} 
+                onValueChange={(val) => handleUpdateAnswer(parseInt(val))}
+                className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              >
+                {currentQuestion.options.map((option, i) => {
+                  const isSelected = answers[currentIdx] === i;
+                  return (
+                    <div key={i}>
+                      <Label
+                        htmlFor={`opt-${i}`}
+                        className={cn(
+                          "flex items-center gap-6 p-8 rounded-[2rem] border-4 cursor-pointer transition-all duration-300 active:scale-95 group relative overflow-hidden h-full",
+                          isSelected 
+                            ? 'border-primary bg-primary/10 shadow-2xl shadow-primary/20 ring-4 ring-primary/20 translate-y-[-4px]' 
+                            : 'border-border bg-card hover:border-accent hover:bg-accent/5 hover:translate-y-[-2px]'
+                        )}
+                      >
+                        <RadioGroupItem value={i.toString()} id={`opt-${i}`} className="sr-only" />
+                        <div className={cn(
+                          "w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl border-4 transition-all duration-300 group-hover:rotate-6 shrink-0",
+                          isSelected 
+                            ? 'bg-primary border-primary text-white shadow-xl' 
+                            : 'border-muted-foreground/10 text-muted-foreground'
+                        )}>
+                          {String.fromCharCode(65 + i)}
                         </div>
-                      )}
-                    </Label>
+                        <span className="text-xl md:text-2xl font-black">{option}</span>
+                        
+                        {isSelected && (
+                          <div className="absolute right-6 top-1/2 -translate-y-1/2 text-primary animate-in fade-in zoom-in">
+                            <CheckCircle2 size={32} />
+                          </div>
+                        )}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </RadioGroup>
+            ) : (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="bg-accent/5 p-8 rounded-[2rem] border-4 border-dashed border-accent/20">
+                  <div className="flex items-center gap-4 mb-4 text-accent">
+                    <Type size={24} />
+                    <span className="text-sm font-black uppercase tracking-widest">Ketik Jawabanmu</span>
                   </div>
-                );
-              })}
-            </RadioGroup>
+                  <Input 
+                    value={answers[currentIdx] === -1 ? '' : answers[currentIdx].toString()}
+                    onChange={(e) => handleUpdateAnswer(e.target.value)}
+                    placeholder="Tuliskan jawaban di sini..."
+                    className="h-20 text-3xl font-black text-center bg-background border-4 rounded-[1.5rem] focus:ring-8 focus:ring-accent/20 focus:border-accent transition-all shadow-inner"
+                  />
+                </div>
+                <p className="text-center text-muted-foreground font-bold italic">
+                  *Tips: Perhatikan ejaan dengan teliti sebelum lanjut.
+                </p>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex justify-between p-10 bg-primary/5 border-t border-primary/10">
             <Button 
@@ -205,7 +235,7 @@ export default function QuizPage() {
             {currentIdx === quiz.questions.length - 1 ? (
               <Button 
                 onClick={handleFinish}
-                disabled={answers.some(a => a === -1)}
+                disabled={!isCurrentAnswered}
                 className="h-16 px-12 bg-green-600 hover:bg-green-700 text-white font-black text-xl rounded-2xl shadow-2xl shadow-green-500/40 active:scale-95 transition-all"
               >
                 Selesai & Kumpulkan <Send className="ml-3 w-6 h-6" />
@@ -213,7 +243,7 @@ export default function QuizPage() {
             ) : (
               <Button 
                 onClick={nextQuestion}
-                disabled={answers[currentIdx] === -1}
+                disabled={!isCurrentAnswered}
                 className="h-16 px-10 rounded-2xl font-black text-xl transition-all shadow-xl shadow-primary/20"
               >
                 Berikutnya <ChevronRight className="ml-2 w-6 h-6" />

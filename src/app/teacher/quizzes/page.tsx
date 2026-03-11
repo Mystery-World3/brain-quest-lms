@@ -3,17 +3,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { initialQuizzes, classes as initialClasses } from '@/lib/mock-data';
-import { Quiz, Question, Class } from '@/lib/types';
+import { Quiz, Question, Class, QuestionType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus, Type, List } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function QuizManagement() {
   const { toast } = useToast();
@@ -74,7 +75,7 @@ export default function QuizManagement() {
       id: `quiz-${Date.now()}`,
       title: '',
       classId: '',
-      questions: [{ id: 'q1', text: '', options: ['', '', '', ''], correctAnswer: 0 }]
+      questions: [{ id: 'q1', type: 'multiple-choice', text: '', options: ['', '', '', ''], correctAnswer: 0 }]
     });
     setIsDialogOpen(true);
   };
@@ -111,6 +112,7 @@ export default function QuizManagement() {
       for (let i = 0; i < count; i++) {
         newQuestions.push({
           id: `q-${Date.now()}-${i}`,
+          type: 'multiple-choice',
           text: '',
           options: ['', '', '', ''],
           correctAnswer: 0
@@ -136,6 +138,12 @@ export default function QuizManagement() {
     if (editingQuiz && editingQuiz.questions) {
       const newQuestions = [...editingQuiz.questions];
       newQuestions[idx] = { ...newQuestions[idx], [field]: value };
+      
+      // Reset correctAnswer if type changes
+      if (field === 'type') {
+        newQuestions[idx].correctAnswer = value === 'multiple-choice' ? 0 : '';
+      }
+      
       setEditingQuiz({ ...editingQuiz, questions: newQuestions });
     }
   };
@@ -212,7 +220,6 @@ export default function QuizManagement() {
         </CardContent>
       </Card>
 
-      {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-2xl p-0">
           <div className="bg-primary p-8 text-white sticky top-0 z-10">
@@ -277,7 +284,23 @@ export default function QuizManagement() {
               {editingQuiz?.questions?.map((q, qIdx) => (
                 <Card key={q.id} className="border-2 rounded-2xl overflow-hidden shadow-sm student-card-hover group">
                   <CardHeader className="bg-muted/30 py-4 px-6 flex flex-row justify-between items-center transition-colors group-hover:bg-primary/5">
-                    <span className="font-black text-lg">Soal #{qIdx + 1}</span>
+                    <div className="flex items-center gap-4">
+                      <span className="font-black text-lg">Soal #{qIdx + 1}</span>
+                      <Tabs 
+                        value={q.type} 
+                        onValueChange={(val) => updateQuestion(qIdx, 'type', val as QuestionType)}
+                        className="w-fit"
+                      >
+                        <TabsList className="h-9 p-1 rounded-lg bg-background border-2">
+                          <TabsTrigger value="multiple-choice" className="text-xs font-black gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                            <List size={14} /> PG
+                          </TabsTrigger>
+                          <TabsTrigger value="short-answer" className="text-xs font-black gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                            <Type size={14} /> Isian
+                          </TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                    </div>
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -298,33 +321,46 @@ export default function QuizManagement() {
                         className="h-12 font-bold text-lg border-2 focus:ring-primary/20" 
                       />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                      {q.options.map((opt, oIdx) => (
-                        <div key={oIdx} className="space-y-1">
-                          <div className="flex gap-2 items-center">
-                            <Button 
-                              variant={q.correctAnswer === oIdx ? "default" : "outline"}
-                              size="icon"
-                              className="shrink-0 h-10 w-10 rounded-lg font-black border-2"
-                              onClick={() => updateQuestion(qIdx, 'correctAnswer', oIdx)}
-                              title="Tandai sebagai jawaban benar"
-                            >
-                              {String.fromCharCode(65 + oIdx)}
-                            </Button>
-                            <Input 
-                              placeholder={`Pilihan ${String.fromCharCode(65 + oIdx)}`}
-                              value={opt}
-                              onChange={(e) => {
-                                const newOpts = [...q.options];
-                                newOpts[oIdx] = e.target.value;
-                                updateQuestion(qIdx, 'options', newOpts);
-                              }}
-                              className={`h-10 font-medium ${q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : ''}`}
-                            />
+                    
+                    {q.type === 'multiple-choice' ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                        {q.options.map((opt, oIdx) => (
+                          <div key={oIdx} className="space-y-1">
+                            <div className="flex gap-2 items-center">
+                              <Button 
+                                variant={q.correctAnswer === oIdx ? "default" : "outline"}
+                                size="icon"
+                                className="shrink-0 h-10 w-10 rounded-lg font-black border-2"
+                                onClick={() => updateQuestion(qIdx, 'correctAnswer', oIdx)}
+                              >
+                                {String.fromCharCode(65 + oIdx)}
+                              </Button>
+                              <Input 
+                                placeholder={`Pilihan ${String.fromCharCode(65 + oIdx)}`}
+                                value={opt}
+                                onChange={(e) => {
+                                  const newOpts = [...q.options];
+                                  newOpts[oIdx] = e.target.value;
+                                  updateQuestion(qIdx, 'options', newOpts);
+                                }}
+                                className={`h-10 font-medium ${q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : ''}`}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="space-y-2 pt-2">
+                         <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Jawaban Benar</label>
+                         <Input 
+                          placeholder="Masukkan kunci jawaban yang benar..." 
+                          value={q.correctAnswer as string}
+                          onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
+                          className="h-12 font-black text-lg border-2 border-primary/20 focus:border-primary" 
+                        />
+                        <p className="text-[10px] font-bold text-muted-foreground ml-1 italic">*Sistem akan mengabaikan huruf besar/kecil saat mengoreksi.</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -341,7 +377,6 @@ export default function QuizManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="rounded-[2rem]">
           <AlertDialogHeader>

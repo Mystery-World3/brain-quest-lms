@@ -36,7 +36,11 @@ export default function ResultsPage() {
     }
     const parsed = JSON.parse(lastResult);
     setResult(parsed);
-    setQuiz(initialQuizzes.find(q => q.id === parsed.quizId) || initialQuizzes[0]);
+    
+    // Check localStorage quizzes first
+    const savedQuizzesRaw = localStorage.getItem('app_quizzes');
+    const quizzesToSearch = savedQuizzesRaw ? JSON.parse(savedQuizzesRaw) : initialQuizzes;
+    setQuiz(quizzesToSearch.find((q: any) => q.id === parsed.quizId) || quizzesToSearch[0]);
   }, [router]);
 
   if (!result || !quiz) return (
@@ -47,7 +51,6 @@ export default function ResultsPage() {
 
   const isHighPerformance = result.score >= 80;
 
-  // Mock scoreboard data for the current class
   const currentClassName = classes.find(c => c.id === result.classId)?.name || "Kelas";
   const classScores = [
     { name: studentName, score: result.score, isCurrent: true },
@@ -64,7 +67,6 @@ export default function ResultsPage() {
       </div>
 
       <div className="w-full max-w-4xl space-y-10 pb-40">
-        {/* Celebration Header */}
         <div className={cn(
           "relative overflow-hidden rounded-[3rem] p-12 md:p-20 shadow-2xl text-center border-8 border-white dark:border-primary/20",
           isHighPerformance 
@@ -97,7 +99,6 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="flex justify-center">
            <Card 
             onClick={() => setShowScoreboard(true)}
@@ -113,14 +114,19 @@ export default function ResultsPage() {
            </Card>
         </div>
 
-        {/* Detailed Evaluation */}
         <div className="space-y-8">
           <h2 className="text-3xl font-headline font-black flex items-center gap-4 px-4">
             <span className="bg-foreground text-background p-2 rounded-xl">01</span> Evaluasi Jawaban
           </h2>
           <div className="grid gap-6">
             {quiz.questions.map((q: any, i: number) => {
-              const isCorrect = result.answers[i] === q.correctAnswer;
+              let isCorrect = false;
+              if (q.type === 'multiple-choice') {
+                isCorrect = result.answers[i] === q.correctAnswer;
+              } else {
+                isCorrect = result.answers[i]?.toString().trim().toLowerCase() === q.correctAnswer?.toString().trim().toLowerCase();
+              }
+
               return (
                 <Card key={q.id} className={cn(
                   "border-4 rounded-[2.5rem] shadow-xl transition-all duration-300 student-card-hover overflow-hidden",
@@ -160,14 +166,19 @@ export default function ResultsPage() {
                         )}>
                           <span className="text-xs font-black uppercase tracking-[0.2em] opacity-50">Pilihanmu</span>
                           <span className="text-lg font-black">
-                            {q.options[result.answers[i]] || 'Kosong'}
+                            {q.type === 'multiple-choice' 
+                              ? (q.options[result.answers[i]] || 'Kosong')
+                              : (result.answers[i] === -1 ? 'Kosong' : result.answers[i])
+                            }
                           </span>
                         </div>
                         
                         {!isCorrect && (
                           <div className="p-6 rounded-3xl border-4 border-green-500/20 bg-green-50/30 dark:bg-green-950/10 flex flex-col gap-2 shadow-inner">
                             <span className="text-xs font-black uppercase tracking-[0.2em] text-green-600">Kunci Jawaban</span>
-                            <span className="text-lg font-black text-green-700 dark:text-green-400">{q.options[q.correctAnswer]}</span>
+                            <span className="text-lg font-black text-green-700 dark:text-green-400">
+                              {q.type === 'multiple-choice' ? q.options[q.correctAnswer] : q.correctAnswer}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -179,7 +190,6 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Sticky Celebration Actions */}
         <div className="fixed bottom-0 left-0 right-0 p-8 bg-background/80 backdrop-blur-2xl border-t-4 border-primary/5 flex justify-center gap-6 z-50">
           <Button 
             variant="outline" 
@@ -197,7 +207,6 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      {/* Scoreboard Dialog */}
       <Dialog open={showScoreboard} onOpenChange={setShowScoreboard}>
         <DialogContent className="max-w-2xl rounded-[3rem] p-0 overflow-hidden border-none shadow-2xl">
           <div className="bg-primary p-12 text-center text-white relative">

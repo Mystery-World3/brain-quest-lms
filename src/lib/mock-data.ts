@@ -18,15 +18,17 @@ export const initialQuizzes: Quiz[] = [
     questions: [
       {
         id: 'q1',
+        type: 'multiple-choice',
         text: 'Hasil dari 5 + (-3) adalah...',
         options: ['2', '-2', '8', '-8'],
         correctAnswer: 0,
       },
       {
         id: 'q2',
-        text: 'Berapakah 12 x 3?',
-        options: ['34', '36', '38', '40'],
-        correctAnswer: 1,
+        type: 'short-answer',
+        text: 'Berapakah hasil dari 12 dikali 3?',
+        options: [],
+        correctAnswer: '36',
       },
     ],
   },
