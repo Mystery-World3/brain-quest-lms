@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -17,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const mathSymbols = [
   "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
@@ -179,7 +179,7 @@ export default function QuizManagement() {
   };
 
   const MathKeyboard = ({ onSelect }: { onSelect: (s: string) => void }) => (
-    <div className="grid grid-cols-5 sm:grid-cols-10 gap-1 p-2 bg-slate-900 rounded-xl border border-slate-700 shadow-2xl">
+    <div className="grid grid-cols-5 sm:grid-cols-10 gap-1 p-2 bg-slate-900 rounded-xl border border-slate-700 shadow-2xl max-w-[300px] sm:max-w-none">
       {mathSymbols.map(sym => (
         <Button 
           key={sym} 
@@ -203,7 +203,7 @@ export default function QuizManagement() {
   const MathButton = ({ onSelect }: { onSelect: (s: string) => void }) => (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl border-2 shrink-0 hover:bg-primary/10 transition-all">
+        <Button variant="outline" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-xl border-2 shrink-0 hover:bg-primary/10 transition-all">
           <Sigma className="w-5 h-5 text-primary" />
         </Button>
       </PopoverTrigger>
@@ -219,237 +219,243 @@ export default function QuizManagement() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
-          <h1 className="text-4xl font-headline font-black text-foreground tracking-tighter">Manajemen Kuis</h1>
-          <p className="text-lg font-bold text-muted-foreground mt-1">Kelola bank soal untuk setiap jenjang kelas.</p>
+          <h1 className="text-3xl md:text-4xl font-headline font-black text-foreground tracking-tighter">Manajemen Kuis</h1>
+          <p className="text-base md:text-lg font-bold text-muted-foreground mt-1">Kelola bank soal untuk setiap jenjang kelas.</p>
         </div>
         
-        <Button onClick={openAddDialog} className="h-14 px-8 font-black text-lg rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all">
+        <Button onClick={openAddDialog} className="h-12 md:h-14 px-6 md:px-8 font-black text-base md:text-lg rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all w-full sm:w-auto">
           <Plus className="mr-2" size={24} /> Tambah Kuis
         </Button>
       </div>
 
-      <Card className="border-none shadow-2xl rounded-[2rem] overflow-hidden bg-card/50 backdrop-blur-sm">
-        <CardHeader className="bg-card border-b p-8">
+      <Card className="border-none shadow-2xl rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-card/50 backdrop-blur-sm">
+        <CardHeader className="bg-card border-b p-6 md:p-8">
           <div className="relative w-full max-w-md group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 group-focus-within:text-primary transition-colors" />
             <Input 
               placeholder="Cari kuis atau kelas..." 
-              className="pl-12 h-14 rounded-2xl border-2 font-bold text-lg bg-background"
+              className="pl-12 h-12 md:h-14 rounded-xl md:rounded-2xl border-2 font-bold text-base md:text-lg bg-background"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-muted/30">
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[300px] h-16 font-black uppercase text-xs tracking-widest pl-8 text-foreground">Judul Kuis</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Kelas</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Jumlah Soal</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Status</TableHead>
-                <TableHead className="text-right h-16 font-black uppercase text-xs tracking-widest pr-8 text-foreground">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredQuizzes.map((quiz) => (
-                <TableRow key={quiz.id} className="hover:bg-primary/5 transition-colors group border-b">
-                  <TableCell className="font-black text-lg pl-8 py-6 text-foreground">{quiz.title}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="font-black py-1.5 px-4 rounded-xl border-none bg-accent/10 text-accent">
-                      {classes.find(c => c.id === quiz.classId)?.name}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-bold text-muted-foreground">{quiz.questions.length} Soal</TableCell>
-                  <TableCell>
-                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 hover:bg-green-100 border-none py-1.5 px-4 rounded-xl font-black text-xs">
-                      AKTIF
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right pr-8">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="icon" onClick={() => openEditDialog(quiz)} className="h-10 w-10 rounded-xl border-2 hover:bg-primary hover:text-white transition-all"><Pencil size={18} /></Button>
-                      <Button variant="outline" size="icon" onClick={() => handleDeleteRequest(quiz.id)} className="h-10 w-10 rounded-xl border-2 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18} /></Button>
-                    </div>
-                  </TableCell>
+          <ScrollArea className="w-full overflow-auto">
+            <Table className="min-w-[800px]">
+              <TableHeader className="bg-muted/30">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[300px] h-16 font-black uppercase text-xs tracking-widest pl-8 text-foreground">Judul Kuis</TableHead>
+                  <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Kelas</TableHead>
+                  <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Jumlah Soal</TableHead>
+                  <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Status</TableHead>
+                  <TableHead className="text-right h-16 font-black uppercase text-xs tracking-widest pr-8 text-foreground">Aksi</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {filteredQuizzes.length === 0 && (
-            <div className="p-24 text-center">
-              <div className="bg-muted/20 inline-block p-8 rounded-full mb-6">
-                <Search className="w-16 h-16 text-muted-foreground opacity-20" />
+              </TableHeader>
+              <TableBody>
+                {filteredQuizzes.map((quiz) => (
+                  <TableRow key={quiz.id} className="hover:bg-primary/5 transition-colors group border-b">
+                    <TableCell className="font-black text-lg pl-8 py-6 text-foreground">{quiz.title}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="font-black py-1.5 px-4 rounded-xl border-none bg-accent/10 text-accent">
+                        {classes.find(c => c.id === quiz.classId)?.name}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-bold text-muted-foreground">{quiz.questions.length} Soal</TableCell>
+                    <TableCell>
+                      <Badge className="bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 hover:bg-green-100 border-none py-1.5 px-4 rounded-xl font-black text-xs">
+                        AKTIF
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right pr-8">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="icon" onClick={() => openEditDialog(quiz)} className="h-10 w-10 rounded-xl border-2 hover:bg-primary hover:text-white transition-all"><Pencil size={18} /></Button>
+                        <Button variant="outline" size="icon" onClick={() => handleDeleteRequest(quiz.id)} className="h-10 w-10 rounded-xl border-2 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18} /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {filteredQuizzes.length === 0 && (
+              <div className="p-16 md:p-24 text-center">
+                <div className="bg-muted/20 inline-block p-6 md:p-8 rounded-full mb-6">
+                  <Search className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground opacity-20" />
+                </div>
+                <p className="text-xl md:text-2xl font-black text-muted-foreground">Tidak ada kuis ditemukan.</p>
               </div>
-              <p className="text-2xl font-black text-muted-foreground">Tidak ada kuis ditemukan.</p>
-            </div>
-          )}
+            )}
+          </ScrollArea>
         </CardContent>
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-2xl p-0">
-          <div className="bg-primary p-8 text-white sticky top-0 z-50">
+        <DialogContent className="max-w-4xl w-[95vw] md:w-full max-h-[90vh] overflow-hidden flex flex-col rounded-[1.5rem] md:rounded-[2.5rem] border-none shadow-2xl p-0">
+          <div className="bg-primary p-6 md:p-8 text-white shrink-0">
             <DialogHeader>
-              <DialogTitle className="text-3xl font-headline font-black">
+              <DialogTitle className="text-2xl md:text-3xl font-headline font-black">
                 {editingQuiz?.id?.includes('quiz-') ? 'Edit Kuis' : 'Buat Kuis Baru'}
               </DialogTitle>
-              <DialogDescription className="text-white/80 font-bold text-lg">Sesuaikan informasi dan butir soal di bawah ini.</DialogDescription>
+              <DialogDescription className="text-white/80 font-bold text-base md:text-lg">Sesuaikan informasi dan butir soal di bawah ini.</DialogDescription>
             </DialogHeader>
           </div>
-          <div className="p-8 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Judul Kuis</label>
-                <Input 
-                  value={editingQuiz?.title || ''}
-                  onChange={(e) => setEditingQuiz({ ...editingQuiz!, title: e.target.value })}
-                  placeholder="Contoh: Aljabar Dasar - Sesi 1" 
-                  className="h-14 rounded-xl border-2 font-bold text-lg text-foreground" 
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Tingkat Kelas</label>
-                <Select value={editingQuiz?.classId || ''} onValueChange={(val) => setEditingQuiz({ ...editingQuiz!, classId: val })}>
-                  <SelectTrigger className="h-14 rounded-xl border-2 font-bold text-lg text-foreground">
-                    <SelectValue placeholder="Pilih Kelas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {classes.map(c => <SelectItem key={c.id} value={c.id} className="font-bold">{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-dashed pb-6 gap-4">
-                <h3 className="text-xl font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                  <BookOpen size={24} /> Butir Soal ({editingQuiz?.questions?.length || 0})
-                </h3>
-                <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-2xl border-2 border-primary/10">
-                  <div className="flex items-center gap-2 px-3">
-                    <ListPlus size={18} className="text-primary" />
-                    <Input 
-                      type="number" 
-                      min={1} 
-                      max={20}
-                      value={bulkCount}
-                      onChange={(e) => setBulkCount(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-16 h-10 font-black text-center border-2 rounded-lg"
-                    />
-                  </div>
-                  <Button 
-                    onClick={() => addQuestions(bulkCount)} 
-                    variant="default" 
-                    className="rounded-xl font-bold h-10 shadow-md"
-                  >
-                    <Plus className="mr-2 h-4 w-4" /> Tambah {bulkCount > 1 ? bulkCount : ''} Soal
-                  </Button>
+          
+          <ScrollArea className="flex-1 overflow-y-auto">
+            <div className="p-6 md:p-8 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] md:text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Judul Kuis</label>
+                  <Input 
+                    value={editingQuiz?.title || ''}
+                    onChange={(e) => setEditingQuiz({ ...editingQuiz!, title: e.target.value })}
+                    placeholder="Contoh: Aljabar Dasar - Sesi 1" 
+                    className="h-12 md:h-14 rounded-xl border-2 font-bold text-base md:text-lg text-foreground" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] md:text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Tingkat Kelas</label>
+                  <Select value={editingQuiz?.classId || ''} onValueChange={(val) => setEditingQuiz({ ...editingQuiz!, classId: val })}>
+                    <SelectTrigger className="h-12 md:h-14 rounded-xl border-2 font-bold text-base md:text-lg text-foreground">
+                      <SelectValue placeholder="Pilih Kelas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classes.map(c => <SelectItem key={c.id} value={c.id} className="font-bold">{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              {editingQuiz?.questions?.map((q, qIdx) => (
-                <Card key={q.id} className="border-2 rounded-2xl overflow-hidden shadow-sm student-card-hover group">
-                  <CardHeader className="bg-muted/30 py-4 px-6 flex flex-row justify-between items-center transition-colors group-hover:bg-primary/5">
-                    <div className="flex items-center gap-4">
-                      <span className="font-black text-lg text-foreground">Soal #{qIdx + 1}</span>
-                      <Tabs 
-                        value={q.type} 
-                        onValueChange={(val) => updateQuestion(qIdx, 'type', val as QuestionType)}
-                        className="w-fit"
-                      >
-                        <TabsList className="h-9 p-1 rounded-lg bg-background border-2">
-                          <TabsTrigger value="multiple-choice" className="text-xs font-black gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-                            <List size={14} /> PG
-                          </TabsTrigger>
-                          <TabsTrigger value="short-answer" className="text-xs font-black gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-                            <Type size={14} /> Isian
-                          </TabsTrigger>
-                        </TabsList>
-                      </Tabs>
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-dashed pb-6 gap-4">
+                  <h3 className="text-lg md:text-xl font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                    <BookOpen size={24} /> Butir Soal ({editingQuiz?.questions?.length || 0})
+                  </h3>
+                  <div className="flex items-center gap-2 md:gap-3 bg-muted/30 p-2 rounded-2xl border-2 border-primary/10 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 px-2 md:px-3 flex-1 sm:flex-none">
+                      <ListPlus size={18} className="text-primary" />
+                      <Input 
+                        type="number" 
+                        min={1} 
+                        max={20}
+                        value={bulkCount}
+                        onChange={(e) => setBulkCount(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-full sm:w-16 h-10 font-black text-center border-2 rounded-lg"
+                      />
                     </div>
                     <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => removeQuestion(qIdx)}
-                      className="text-red-500 hover:bg-red-50 hover:text-red-600"
-                      disabled={editingQuiz.questions!.length <= 1}
+                      onClick={() => addQuestions(bulkCount)} 
+                      variant="default" 
+                      className="rounded-xl font-bold h-10 shadow-md whitespace-nowrap"
                     >
-                      <Trash2 size={20} />
+                      <Plus className="mr-2 h-4 w-4" /> {bulkCount > 1 ? `+${bulkCount}` : '+1'} Soal
                     </Button>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-6">
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Pertanyaan</label>
-                       <div className="flex gap-2">
-                         <Input 
-                          placeholder="Masukkan teks pertanyaan di sini..." 
-                          value={q.text}
-                          onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
-                          className="h-12 font-bold text-lg border-2 focus:ring-primary/20 text-foreground" 
-                        />
-                        <MathButton onSelect={(s) => appendSymbol(qIdx, 'text', s)} />
-                       </div>
-                    </div>
-                    
-                    {q.type === 'multiple-choice' ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                        {q.options.map((opt, oIdx) => (
-                          <div key={oIdx} className="space-y-1">
-                            <div className="flex gap-2 items-center">
-                              <Button 
-                                variant={q.correctAnswer === oIdx ? "default" : "outline"}
-                                size="icon"
-                                className="shrink-0 h-10 w-10 rounded-lg font-black border-2"
-                                onClick={() => updateQuestion(qIdx, 'correctAnswer', oIdx)}
-                              >
-                                {String.fromCharCode(65 + oIdx)}
-                              </Button>
-                              <div className="flex-1 flex gap-2">
-                                <Input 
-                                  placeholder={`Pilihan ${String.fromCharCode(65 + oIdx)}`}
-                                  value={opt}
-                                  onChange={(e) => {
-                                    const newOpts = [...q.options];
-                                    newOpts[oIdx] = e.target.value;
-                                    updateQuestion(qIdx, 'options', newOpts);
-                                  }}
-                                  className={cn("h-10 font-medium text-foreground", q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : '')}
-                                />
-                                <MathButton onSelect={(s) => appendSymbol(qIdx, 'option', s, oIdx)} />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                  </div>
+                </div>
+
+                {editingQuiz?.questions?.map((q, qIdx) => (
+                  <Card key={q.id} className="border-2 rounded-xl md:rounded-2xl overflow-hidden shadow-sm student-card-hover group">
+                    <CardHeader className="bg-muted/30 py-3 md:py-4 px-4 md:px-6 flex flex-row justify-between items-center transition-colors group-hover:bg-primary/5">
+                      <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
+                        <span className="font-black text-base md:text-lg text-foreground whitespace-nowrap">#{qIdx + 1}</span>
+                        <Tabs 
+                          value={q.type} 
+                          onValueChange={(val) => updateQuestion(qIdx, 'type', val as QuestionType)}
+                          className="w-fit shrink-0"
+                        >
+                          <TabsList className="h-8 md:h-9 p-1 rounded-lg bg-background border-2">
+                            <TabsTrigger value="multiple-choice" className="text-[10px] md:text-xs font-black gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                              <List size={14} /> PG
+                            </TabsTrigger>
+                            <TabsTrigger value="short-answer" className="text-[10px] md:text-xs font-black gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                              <Type size={14} /> Isian
+                            </TabsTrigger>
+                          </TabsList>
+                        </Tabs>
                       </div>
-                    ) : (
-                      <div className="space-y-2 pt-2">
-                         <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Jawaban Benar</label>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => removeQuestion(qIdx)}
+                        className="text-red-500 hover:bg-red-50 hover:text-red-600 shrink-0"
+                        disabled={editingQuiz.questions!.length <= 1}
+                      >
+                        <Trash2 size={18} md:size={20} />
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="p-4 md:p-6 space-y-6">
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Pertanyaan</label>
                          <div className="flex gap-2">
                            <Input 
-                            placeholder="Masukkan kunci jawaban yang benar..." 
-                            value={q.correctAnswer as string}
-                            onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
-                            className="h-12 font-black text-lg border-2 border-primary/20 focus:border-primary text-foreground" 
+                            placeholder="Masukkan teks pertanyaan di sini..." 
+                            value={q.text}
+                            onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
+                            className="h-10 md:h-12 font-bold text-base md:text-lg border-2 focus:ring-primary/20 text-foreground" 
                           />
-                          <MathButton onSelect={(s) => appendSymbol(qIdx, 'correctAnswer', s)} />
+                          <MathButton onSelect={(s) => appendSymbol(qIdx, 'text', s)} />
                          </div>
-                        <p className="text-[10px] font-bold text-muted-foreground ml-1 italic">*Sistem akan mengabaikan huruf besar/kecil saat mengoreksi.</p>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                      
+                      {q.type === 'multiple-choice' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                          {q.options.map((opt, oIdx) => (
+                            <div key={oIdx} className="space-y-1">
+                              <div className="flex gap-2 items-center">
+                                <Button 
+                                  variant={q.correctAnswer === oIdx ? "default" : "outline"}
+                                  size="icon"
+                                  className="shrink-0 h-10 w-10 rounded-lg font-black border-2 text-xs"
+                                  onClick={() => updateQuestion(qIdx, 'correctAnswer', oIdx)}
+                                >
+                                  {String.fromCharCode(65 + oIdx)}
+                                </Button>
+                                <div className="flex-1 flex gap-1 md:gap-2">
+                                  <Input 
+                                    placeholder={`Pilihan ${String.fromCharCode(65 + oIdx)}`}
+                                    value={opt}
+                                    onChange={(e) => {
+                                      const newOpts = [...q.options];
+                                      newOpts[oIdx] = e.target.value;
+                                      updateQuestion(qIdx, 'options', newOpts);
+                                    }}
+                                    className={cn("h-10 font-medium text-foreground text-sm", q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : '')}
+                                  />
+                                  <MathButton onSelect={(s) => appendSymbol(qIdx, 'option', s, oIdx)} />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-2 pt-2">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Jawaban Benar</label>
+                           <div className="flex gap-2">
+                             <Input 
+                              placeholder="Masukkan kunci jawaban..." 
+                              value={q.correctAnswer as string}
+                              onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
+                              className="h-10 md:h-12 font-black text-base md:text-lg border-2 border-primary/20 focus:border-primary text-foreground" 
+                            />
+                            <MathButton onSelect={(s) => appendSymbol(qIdx, 'correctAnswer', s)} />
+                           </div>
+                          <p className="text-[10px] font-bold text-muted-foreground ml-1 italic">*Huruf besar/kecil diabaikan saat koreksi.</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
-          <DialogFooter className="p-8 bg-muted/20 border-t sticky bottom-0 flex gap-3 z-50">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-xl font-black text-lg text-foreground">
+          </ScrollArea>
+
+          <DialogFooter className="p-6 md:p-8 bg-muted/20 border-t flex flex-col sm:flex-row gap-3 shrink-0">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-12 md:h-14 px-6 md:px-8 rounded-xl font-black text-base md:text-lg text-foreground w-full sm:w-auto order-2 sm:order-1">
               <X className="mr-2" /> Batal
             </Button>
-            <Button onClick={handleSaveQuiz} className="h-14 px-10 rounded-xl font-black text-lg shadow-lg">
+            <Button onClick={handleSaveQuiz} className="h-12 md:h-14 px-8 md:px-10 rounded-xl font-black text-base md:text-lg shadow-lg w-full sm:w-auto order-1 sm:order-2">
               <Save className="mr-2" /> Simpan Kuis
             </Button>
           </DialogFooter>
@@ -457,16 +463,16 @@ export default function QuizManagement() {
       </Dialog>
 
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <AlertDialogContent className="rounded-[2rem]">
+        <AlertDialogContent className="rounded-[1.5rem] md:rounded-[2rem] w-[90vw] max-w-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-foreground">Hapus Kuis?</AlertDialogTitle>
-            <AlertDialogDescription className="text-lg font-bold">
+            <AlertDialogTitle className="text-xl md:text-2xl font-black text-foreground">Hapus Kuis?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base md:text-lg font-bold">
               Tindakan ini tidak dapat dibatalkan. Seluruh data kuis dan progres siswa yang terkait akan ikut terhapus.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-3 mt-4">
-            <AlertDialogCancel className="h-12 rounded-xl font-bold">Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="h-12 rounded-xl bg-red-600 hover:bg-red-700 font-black">
+          <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-4">
+            <AlertDialogCancel className="h-10 md:h-12 rounded-xl font-bold w-full sm:w-auto">Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="h-10 md:h-12 rounded-xl bg-red-600 hover:bg-red-700 font-black w-full sm:w-auto">
               Hapus Permanen
             </AlertDialogAction>
           </AlertDialogFooter>
