@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus, Type, List, Sigma, Upload, Info } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus, Type, List, Upload, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -398,7 +398,7 @@ export default function QuizManagement() {
                         className="text-red-500 hover:bg-red-50 hover:text-red-600 shrink-0"
                         disabled={editingQuiz.questions!.length <= 1}
                       >
-                        <Trash2 size={18} md:size={20} />
+                        <Trash2 size={18} className="md:w-5 md:h-5" />
                       </Button>
                     </CardHeader>
                     <CardContent className="p-4 md:p-6 space-y-6">
