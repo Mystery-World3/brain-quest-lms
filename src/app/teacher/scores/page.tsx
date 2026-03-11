@@ -23,7 +23,7 @@ export default function StudentScores() {
   const [selectedClass, setSelectedClass] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [scoreToDelete, setScoreToDelete] = useState<string | null>(null);
   const [editingScore, setEditingScore] = useState<any>(null);
 
@@ -63,7 +63,7 @@ export default function StudentScores() {
 
   const handleDeleteRequest = (id: string) => {
     setScoreToDelete(id);
-    setIsDeleteDialogOpen(true);
+    setIsConfirmOpen(true);
   };
 
   const confirmDelete = () => {
@@ -72,7 +72,7 @@ export default function StudentScores() {
       saveScores(updated);
       toast({ title: "Nilai Dihapus", description: "Catatan nilai siswa telah dihapus." });
     }
-    setIsDeleteDialogOpen(false);
+    setIsConfirmOpen(false);
   };
 
   const openAddDialog = () => {
@@ -129,7 +129,7 @@ export default function StudentScores() {
         <div className="flex gap-4">
           <Button variant="outline" onClick={() => {
             toast({ title: "Laporan Diekspor", description: "File laporan Excel sedang disiapkan." });
-          }} className="h-14 px-8 font-black text-lg rounded-2xl border-2">
+          }} className="h-14 px-8 font-black text-lg rounded-2xl border-2 text-foreground">
             <Download size={22} className="mr-2" /> Ekspor
           </Button>
           <Button onClick={openAddDialog} className="h-14 px-8 font-black text-lg rounded-2xl shadow-xl shadow-primary/20">
@@ -163,7 +163,7 @@ export default function StudentScores() {
            </div>
            <div>
              <p className="text-muted-foreground font-black text-xs uppercase tracking-widest">Update Terakhir</p>
-             <h3 className="text-xl font-black text-foreground">Hari ini, {new Date().getHours()}:{new Date().getMinutes()}</h3>
+             <h3 className="text-xl font-black text-foreground">Hari ini</h3>
            </div>
         </Card>
       </div>
@@ -174,7 +174,7 @@ export default function StudentScores() {
             <div className="space-y-2">
                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Filter Kelas</label>
                <Select onValueChange={setSelectedClass} defaultValue="all">
-                <SelectTrigger className="w-full sm:w-56 h-14 rounded-xl border-2 font-bold text-lg bg-background">
+                <SelectTrigger className="w-full sm:w-56 h-14 rounded-xl border-2 font-bold text-lg bg-background text-foreground">
                   <SelectValue placeholder="Semua Kelas" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -189,7 +189,7 @@ export default function StudentScores() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 <Input 
                   placeholder="Ketik nama siswa..." 
-                  className="pl-12 h-14 rounded-xl border-2 font-bold text-lg bg-background" 
+                  className="pl-12 h-14 rounded-xl border-2 font-bold text-lg bg-background text-foreground" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -201,17 +201,17 @@ export default function StudentScores() {
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest pl-10">Nama Siswa</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest">Kelas</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest">Judul Kuis</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest">Skor</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest">Tanggal</TableHead>
-                <TableHead className="text-right h-16 font-black uppercase text-xs tracking-widest pr-10">Aksi</TableHead>
+                <TableHead className="h-16 font-black uppercase text-xs tracking-widest pl-10 text-foreground">Nama Siswa</TableHead>
+                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Kelas</TableHead>
+                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Judul Kuis</TableHead>
+                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Skor</TableHead>
+                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Tanggal</TableHead>
+                <TableHead className="text-right h-16 font-black uppercase text-xs tracking-widest pr-10 text-foreground">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredScores.map((item) => (
-                <TableRow key={item.id} className="hover:bg-primary/5 transition-colors group">
+                <TableRow key={item.id} className="hover:bg-primary/5 transition-colors group border-b">
                   <TableCell className="pl-10 py-6">
                     <div className="flex items-center gap-4">
                       <div className="bg-primary/10 p-3 rounded-2xl text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-inner">
@@ -249,7 +249,7 @@ export default function StudentScores() {
                   <TableCell className="font-bold text-muted-foreground/80">{item.date}</TableCell>
                   <TableCell className="text-right pr-10">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="icon" onClick={() => openEditDialog(item)} className="h-10 w-10 rounded-xl border-2 hover:bg-primary hover:text-white transition-all"><Pencil size={18} /></Button>
+                      <Button variant="outline" size="icon" onClick={() => openEditDialog(item)} className="h-10 w-10 rounded-xl border-2 hover:bg-primary hover:text-white transition-all text-foreground"><Pencil size={18} /></Button>
                       <Button variant="outline" size="icon" onClick={() => handleDeleteRequest(item.id)} className="h-10 w-10 rounded-xl border-2 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18} /></Button>
                     </div>
                   </TableCell>
@@ -270,7 +270,7 @@ export default function StudentScores() {
         <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
           <div className="bg-primary p-8 text-white">
             <DialogHeader>
-              <DialogTitle className="text-3xl font-headline font-black">
+              <DialogTitle className="text-3xl font-headline font-black text-white">
                 {editingScore?.id?.includes('score-') ? 'Edit Nilai' : 'Tambah Nilai Manual'}
               </DialogTitle>
               <DialogDescription className="text-white/80 font-bold text-lg">Lengkapi data hasil ujian siswa.</DialogDescription>
@@ -283,13 +283,13 @@ export default function StudentScores() {
                 value={editingScore?.name || ''}
                 onChange={(e) => setEditingScore({ ...editingScore!, name: e.target.value })}
                 placeholder="Nama Lengkap" 
-                className="h-14 rounded-xl border-2 font-bold text-lg" 
+                className="h-14 rounded-xl border-2 font-bold text-lg text-foreground" 
               />
             </div>
             <div className="space-y-2">
               <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Tingkat Kelas</label>
               <Select value={editingScore?.classId || ''} onValueChange={(val) => setEditingScore({ ...editingScore!, classId: val })}>
-                <SelectTrigger className="h-14 rounded-xl border-2 font-bold text-lg">
+                <SelectTrigger className="h-14 rounded-xl border-2 font-bold text-lg text-foreground">
                   <SelectValue placeholder="Pilih Kelas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -303,7 +303,7 @@ export default function StudentScores() {
                 value={editingScore?.quiz || ''}
                 onChange={(e) => setEditingScore({ ...editingScore!, quiz: e.target.value })}
                 placeholder="Contoh: Matematika Dasar" 
-                className="h-14 rounded-xl border-2 font-bold text-lg" 
+                className="h-14 rounded-xl border-2 font-bold text-lg text-foreground" 
               />
             </div>
             <div className="space-y-2">
@@ -314,22 +314,22 @@ export default function StudentScores() {
                 min={0}
                 value={editingScore?.score || 0}
                 onChange={(e) => setEditingScore({ ...editingScore!, score: parseInt(e.target.value) || 0 })}
-                className="h-14 rounded-xl border-2 font-bold text-2xl" 
+                className="h-14 rounded-xl border-2 font-bold text-2xl text-foreground" 
               />
             </div>
           </div>
           <DialogFooter className="p-8 bg-muted/20 border-t flex gap-3">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-xl font-black">Batal</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-xl font-black text-foreground">Batal</Button>
             <Button onClick={handleSaveScore} className="h-14 px-10 rounded-xl font-black shadow-lg">Simpan Nilai</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <AlertDialogContent className="rounded-[2rem]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black">Hapus Data Nilai?</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl font-black text-foreground">Hapus Data Nilai?</AlertDialogTitle>
             <AlertDialogDescription className="text-lg font-bold">
               Catatan nilai siswa ini akan dihapus secara permanen dari sistem laporan.
             </AlertDialogDescription>

@@ -21,7 +21,7 @@ export default function ClassManagement() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [classToDelete, setClassToDelete] = useState<string | null>(null);
   const [editingClass, setEditingClass] = useState<Partial<Class> | null>(null);
 
@@ -57,7 +57,7 @@ export default function ClassManagement() {
 
   const handleDeleteRequest = (id: string) => {
     setClassToDelete(id);
-    setIsDeleteDialogOpen(true);
+    setIsConfirmOpen(true);
   };
 
   const confirmDelete = () => {
@@ -66,7 +66,7 @@ export default function ClassManagement() {
       saveClasses(updated);
       toast({ title: "Kelas Dihapus", description: "Data kelas telah dihapus secara permanen." });
     }
-    setIsDeleteDialogOpen(false);
+    setIsConfirmOpen(false);
   };
 
   const openAddDialog = () => {
@@ -122,7 +122,7 @@ export default function ClassManagement() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 group-focus-within:text-primary transition-colors" />
             <Input 
               placeholder="Cari nama kelas..." 
-              className="pl-12 h-14 rounded-2xl border-2 font-bold text-lg bg-background"
+              className="pl-12 h-14 rounded-2xl border-2 font-bold text-lg bg-background text-foreground"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -132,14 +132,14 @@ export default function ClassManagement() {
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest pl-10">Nama Kelas</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-center">Status Akses</TableHead>
-                <TableHead className="text-right h-16 font-black uppercase text-xs tracking-widest pr-10">Aksi</TableHead>
+                <TableHead className="h-16 font-black uppercase text-xs tracking-widest pl-10 text-foreground">Nama Kelas</TableHead>
+                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-center text-foreground">Status Akses</TableHead>
+                <TableHead className="text-right h-16 font-black uppercase text-xs tracking-widest pr-10 text-foreground">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredClasses.map((cls) => (
-                <TableRow key={cls.id} className="hover:bg-primary/5 transition-colors group">
+                <TableRow key={cls.id} className="hover:bg-primary/5 transition-colors group border-b">
                   <TableCell className="pl-10 py-6">
                     <div className="flex items-center gap-4">
                       <div className={cn(
@@ -159,7 +159,7 @@ export default function ClassManagement() {
                       />
                       <Badge className={cn(
                         "border-none py-1 px-3 rounded-lg font-black text-[10px] tracking-widest",
-                        cls.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        cls.active ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400" : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
                       )}>
                         {cls.active ? 'AKTIF' : 'NONAKTIF'}
                       </Badge>
@@ -167,7 +167,7 @@ export default function ClassManagement() {
                   </TableCell>
                   <TableCell className="text-right pr-10">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="icon" onClick={() => openEditDialog(cls)} className="h-10 w-10 rounded-xl border-2 hover:bg-primary hover:text-white transition-all"><Pencil size={18} /></Button>
+                      <Button variant="outline" size="icon" onClick={() => openEditDialog(cls)} className="h-10 w-10 rounded-xl border-2 hover:bg-primary hover:text-white transition-all text-foreground"><Pencil size={18} /></Button>
                       <Button variant="outline" size="icon" onClick={() => handleDeleteRequest(cls.id)} className="h-10 w-10 rounded-xl border-2 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18} /></Button>
                     </div>
                   </TableCell>
@@ -191,7 +191,7 @@ export default function ClassManagement() {
         <DialogContent className="max-w-md rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden">
           <div className="bg-primary p-8 text-white">
             <DialogHeader>
-              <DialogTitle className="text-3xl font-headline font-black">
+              <DialogTitle className="text-3xl font-headline font-black text-white">
                 {editingClass?.id?.includes('class-') ? 'Edit Kelas' : 'Tambah Kelas Baru'}
               </DialogTitle>
               <DialogDescription className="text-white/80 font-bold text-lg">Masukkan identitas kelas di bawah ini.</DialogDescription>
@@ -204,19 +204,19 @@ export default function ClassManagement() {
                 value={editingClass?.name || ''}
                 onChange={(e) => setEditingClass({ ...editingClass!, name: e.target.value })}
                 placeholder="Contoh: Kelas 7 - A" 
-                className="h-14 rounded-xl border-2 font-bold text-lg" 
+                className="h-14 rounded-xl border-2 font-bold text-lg text-foreground" 
               />
             </div>
           </div>
           <DialogFooter className="p-8 bg-muted/20 border-t flex gap-3">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-xl font-black">Batal</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-xl font-black text-foreground">Batal</Button>
             <Button onClick={handleSaveClass} className="h-14 px-10 rounded-xl font-black shadow-lg">Simpan Kelas</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <AlertDialogContent className="rounded-[2rem]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl font-black text-red-600">Hapus Kelas?</AlertDialogTitle>

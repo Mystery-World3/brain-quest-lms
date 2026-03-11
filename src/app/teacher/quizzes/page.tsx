@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { initialQuizzes, classes as initialClasses } from '@/lib/mock-data';
 import { Quiz, Question, Class, QuestionType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,7 +14,7 @@ import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus, Type, List, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from '@/lib/utils';
 
@@ -32,7 +32,7 @@ export default function QuizManagement() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
   const [editingQuiz, setEditingQuiz] = useState<Partial<Quiz> | null>(null);
   const [bulkCount, setBulkCount] = useState<number>(1);
@@ -67,7 +67,7 @@ export default function QuizManagement() {
 
   const handleDeleteRequest = (id: string) => {
     setQuizToDelete(id);
-    setIsDeleteDialogOpen(true);
+    setIsConfirmOpen(true);
   };
 
   const confirmDelete = () => {
@@ -76,7 +76,7 @@ export default function QuizManagement() {
       saveQuizzes(updated);
       toast({ title: "Kuis Dihapus", description: "Data kuis telah dihapus secara permanen." });
     }
-    setIsDeleteDialogOpen(false);
+    setIsConfirmOpen(false);
   };
 
   const openAddDialog = () => {
@@ -175,7 +175,7 @@ export default function QuizManagement() {
   };
 
   const MathKeyboard = ({ onSelect }: { onSelect: (s: string) => void }) => (
-    <div className="grid grid-cols-10 gap-1 p-2 bg-slate-900 rounded-xl border border-slate-700 shadow-2xl">
+    <div className="grid grid-cols-5 sm:grid-cols-10 gap-1 p-2 bg-slate-900 rounded-xl border border-slate-700 shadow-2xl">
       {mathSymbols.map(sym => (
         <Button 
           key={sym} 
@@ -232,17 +232,17 @@ export default function QuizManagement() {
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[300px] h-16 font-black uppercase text-xs tracking-widest pl-8">Judul Kuis</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest">Kelas</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest">Jumlah Soal</TableHead>
-                <TableHead className="h-16 font-black uppercase text-xs tracking-widest">Status</TableHead>
-                <TableHead className="text-right h-16 font-black uppercase text-xs tracking-widest pr-8">Aksi</TableHead>
+                <TableHead className="w-[300px] h-16 font-black uppercase text-xs tracking-widest pl-8 text-foreground">Judul Kuis</TableHead>
+                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Kelas</TableHead>
+                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Jumlah Soal</TableHead>
+                <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Status</TableHead>
+                <TableHead className="text-right h-16 font-black uppercase text-xs tracking-widest pr-8 text-foreground">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredQuizzes.map((quiz) => (
-                <TableRow key={quiz.id} className="hover:bg-primary/5 transition-colors group">
-                  <TableCell className="font-black text-lg pl-8 py-6">{quiz.title}</TableCell>
+                <TableRow key={quiz.id} className="hover:bg-primary/5 transition-colors group border-b">
+                  <TableCell className="font-black text-lg pl-8 py-6 text-foreground">{quiz.title}</TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="font-black py-1.5 px-4 rounded-xl border-none bg-accent/10 text-accent">
                       {classes.find(c => c.id === quiz.classId)?.name}
@@ -250,7 +250,7 @@ export default function QuizManagement() {
                   </TableCell>
                   <TableCell className="font-bold text-muted-foreground">{quiz.questions.length} Soal</TableCell>
                   <TableCell>
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none py-1.5 px-4 rounded-xl font-black text-xs">
+                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 hover:bg-green-100 border-none py-1.5 px-4 rounded-xl font-black text-xs">
                       AKTIF
                     </Badge>
                   </TableCell>
@@ -293,13 +293,13 @@ export default function QuizManagement() {
                   value={editingQuiz?.title || ''}
                   onChange={(e) => setEditingQuiz({ ...editingQuiz!, title: e.target.value })}
                   placeholder="Contoh: Aljabar Dasar - Sesi 1" 
-                  className="h-14 rounded-xl border-2 font-bold text-lg" 
+                  className="h-14 rounded-xl border-2 font-bold text-lg text-foreground" 
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">Tingkat Kelas</label>
                 <Select value={editingQuiz?.classId || ''} onValueChange={(val) => setEditingQuiz({ ...editingQuiz!, classId: val })}>
-                  <SelectTrigger className="h-14 rounded-xl border-2 font-bold text-lg">
+                  <SelectTrigger className="h-14 rounded-xl border-2 font-bold text-lg text-foreground">
                     <SelectValue placeholder="Pilih Kelas" />
                   </SelectTrigger>
                   <SelectContent>
@@ -340,7 +340,7 @@ export default function QuizManagement() {
                 <Card key={q.id} className="border-2 rounded-2xl overflow-hidden shadow-sm student-card-hover group">
                   <CardHeader className="bg-muted/30 py-4 px-6 flex flex-row justify-between items-center transition-colors group-hover:bg-primary/5">
                     <div className="flex items-center gap-4">
-                      <span className="font-black text-lg">Soal #{qIdx + 1}</span>
+                      <span className="font-black text-lg text-foreground">Soal #{qIdx + 1}</span>
                       <Tabs 
                         value={q.type} 
                         onValueChange={(val) => updateQuestion(qIdx, 'type', val as QuestionType)}
@@ -374,7 +374,7 @@ export default function QuizManagement() {
                           placeholder="Masukkan teks pertanyaan di sini..." 
                           value={q.text}
                           onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
-                          className="h-12 font-bold text-lg border-2 focus:ring-primary/20" 
+                          className="h-12 font-bold text-lg border-2 focus:ring-primary/20 text-foreground" 
                         />
                         <MathButton onSelect={(s) => appendSymbol(qIdx, 'text', s)} />
                        </div>
@@ -402,7 +402,7 @@ export default function QuizManagement() {
                                     newOpts[oIdx] = e.target.value;
                                     updateQuestion(qIdx, 'options', newOpts);
                                   }}
-                                  className={cn("h-10 font-medium", q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : '')}
+                                  className={cn("h-10 font-medium text-foreground", q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : '')}
                                 />
                                 <MathButton onSelect={(s) => appendSymbol(qIdx, 'option', s, oIdx)} />
                               </div>
@@ -418,7 +418,7 @@ export default function QuizManagement() {
                             placeholder="Masukkan kunci jawaban yang benar..." 
                             value={q.correctAnswer as string}
                             onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
-                            className="h-12 font-black text-lg border-2 border-primary/20 focus:border-primary" 
+                            className="h-12 font-black text-lg border-2 border-primary/20 focus:border-primary text-foreground" 
                           />
                           <MathButton onSelect={(s) => appendSymbol(qIdx, 'correctAnswer', s)} />
                          </div>
@@ -431,7 +431,7 @@ export default function QuizManagement() {
             </div>
           </div>
           <DialogFooter className="p-8 bg-muted/20 border-t sticky bottom-0 flex gap-3 z-50">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-xl font-black text-lg">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-xl font-black text-lg text-foreground">
               <X className="mr-2" /> Batal
             </Button>
             <Button onClick={handleSaveQuiz} className="h-14 px-10 rounded-xl font-black text-lg shadow-lg">
@@ -441,10 +441,10 @@ export default function QuizManagement() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <AlertDialogContent className="rounded-[2rem]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black">Hapus Kuis?</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl font-black text-foreground">Hapus Kuis?</AlertDialogTitle>
             <AlertDialogDescription className="text-lg font-bold">
               Tindakan ini tidak dapat dibatalkan. Seluruh data kuis dan progres siswa yang terkait akan ikut terhapus.
             </AlertDialogDescription>
