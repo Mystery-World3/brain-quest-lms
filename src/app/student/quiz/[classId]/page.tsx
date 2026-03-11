@@ -215,7 +215,7 @@ export default function QuizPage() {
                   />
                 </div>
                 <p className="text-center text-muted-foreground font-bold italic text-sm md:text-base">
-                  *Tips: Perhatikan ejaan dengan teliti sebelum lanjut.
+                  *tulis jawaban hanya angka saja
                 </p>
               </div>
             )}
