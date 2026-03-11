@@ -9,14 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus, Type, List, Sigma } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus, Type, List, Sigma, Upload, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 
 const mathSymbols = [
   "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
@@ -33,9 +33,11 @@ export default function QuizManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
   const [editingQuiz, setEditingQuiz] = useState<Partial<Quiz> | null>(null);
   const [bulkCount, setBulkCount] = useState<number>(1);
+  const [uploadJson, setUploadJson] = useState('');
   
   useEffect(() => {
     const savedQuizzes = localStorage.getItem('app_quizzes');
@@ -129,10 +131,6 @@ export default function QuizManagement() {
         });
       }
       setEditingQuiz({ ...editingQuiz, questions: newQuestions });
-      toast({
-        title: "Soal Ditambahkan",
-        description: `${count} butir soal baru telah ditambahkan ke daftar.`
-      });
     }
   };
 
@@ -178,19 +176,44 @@ export default function QuizManagement() {
     });
   };
 
-  const MathKeyboard = ({ onSelect }: { onSelect: (s: string) => void }) => (
-    <div className="grid grid-cols-5 sm:grid-cols-10 gap-1 p-2 bg-slate-900 rounded-xl border border-slate-700 shadow-2xl max-w-[300px] sm:max-w-none">
+  const handleBulkUpload = () => {
+    try {
+      const parsed = JSON.parse(uploadJson);
+      if (!Array.isArray(parsed)) throw new Error("Format harus berupa array []");
+      
+      if (editingQuiz) {
+        const validatedQuestions = parsed.map((q: any, i: number) => ({
+          id: `q-bulk-${Date.now()}-${i}`,
+          type: q.type || 'multiple-choice',
+          text: q.text || '',
+          options: q.options || ['', '', '', ''],
+          correctAnswer: q.correctAnswer ?? 0
+        }));
+
+        setEditingQuiz({
+          ...editingQuiz,
+          questions: [...(editingQuiz.questions || []), ...validatedQuestions]
+        });
+        setIsUploadOpen(false);
+        setUploadJson('');
+        toast({ title: "Upload Berhasil", description: `${validatedQuestions.length} soal telah ditambahkan.` });
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Upload Gagal", description: "Pastikan format JSON benar." });
+    }
+  };
+
+  const StaticMathKeyboard = ({ onSelect }: { onSelect: (s: string) => void }) => (
+    <div className="flex flex-wrap gap-1 p-2 bg-muted/40 rounded-xl border-2 border-primary/5 mt-2">
       {mathSymbols.map(sym => (
         <Button 
           key={sym} 
           type="button"
           variant="ghost" 
           size="sm" 
-          className="h-10 w-10 p-0 text-white font-black text-sm hover:bg-primary hover:text-white transition-all rounded-lg"
-          onPointerDown={(e) => e.preventDefault()}
+          className="h-8 w-8 p-0 text-foreground font-black text-xs hover:bg-primary hover:text-white transition-all rounded-md border border-border"
           onClick={(e) => {
             e.preventDefault();
-            e.stopPropagation();
             onSelect(sym);
           }}
         >
@@ -198,24 +221,6 @@ export default function QuizManagement() {
         </Button>
       ))}
     </div>
-  );
-
-  const MathButton = ({ onSelect }: { onSelect: (s: string) => void }) => (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" className="h-10 w-10 md:h-12 md:w-12 rounded-xl border-2 shrink-0 hover:bg-primary/10 transition-all">
-          <Sigma className="w-5 h-5 text-primary" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent 
-        className="w-fit p-0 border-none bg-transparent" 
-        side="top" 
-        align="end"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        <MathKeyboard onSelect={onSelect} />
-      </PopoverContent>
-    </Popover>
   );
 
   return (
@@ -226,9 +231,11 @@ export default function QuizManagement() {
           <p className="text-base md:text-lg font-bold text-muted-foreground mt-1">Kelola bank soal untuk setiap jenjang kelas.</p>
         </div>
         
-        <Button onClick={openAddDialog} className="h-12 md:h-14 px-6 md:px-8 font-black text-base md:text-lg rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all w-full sm:w-auto">
-          <Plus className="mr-2" size={24} /> Tambah Kuis
-        </Button>
+        <div className="flex gap-3 w-full sm:w-auto">
+          <Button onClick={openAddDialog} className="flex-1 sm:flex-none h-12 md:h-14 px-6 md:px-8 font-black text-base md:text-lg rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all">
+            <Plus className="mr-2" size={24} /> Tambah Kuis
+          </Button>
+        </div>
       </div>
 
       <Card className="border-none shadow-2xl rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-card/50 backdrop-blur-sm">
@@ -295,15 +302,24 @@ export default function QuizManagement() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl w-[95vw] md:w-full max-h-[90vh] overflow-hidden flex flex-col rounded-[1.5rem] md:rounded-[2.5rem] border-none shadow-2xl p-0">
           <div className="bg-primary p-6 md:p-8 text-white shrink-0">
-            <DialogHeader>
-              <DialogTitle className="text-2xl md:text-3xl font-headline font-black">
-                {editingQuiz?.id?.includes('quiz-') ? 'Edit Kuis' : 'Buat Kuis Baru'}
-              </DialogTitle>
-              <DialogDescription className="text-white/80 font-bold text-base md:text-lg">Sesuaikan informasi dan butir soal di bawah ini.</DialogDescription>
+            <DialogHeader className="flex flex-row justify-between items-center">
+              <div>
+                <DialogTitle className="text-2xl md:text-3xl font-headline font-black">
+                  {editingQuiz?.id?.includes('quiz-') ? 'Edit Kuis' : 'Buat Kuis Baru'}
+                </DialogTitle>
+                <DialogDescription className="text-white/80 font-bold text-base md:text-lg">Sesuaikan informasi dan butir soal di bawah ini.</DialogDescription>
+              </div>
+              <Button 
+                onClick={() => setIsUploadOpen(true)}
+                variant="outline" 
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 hidden sm:flex"
+              >
+                <Upload className="mr-2 h-4 w-4" /> Upload Soal
+              </Button>
             </DialogHeader>
           </div>
           
-          <ScrollArea className="flex-1 overflow-y-auto">
+          <ScrollArea className="flex-1 overflow-y-auto bg-muted/5">
             <div className="p-6 md:p-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -356,8 +372,8 @@ export default function QuizManagement() {
                 </div>
 
                 {editingQuiz?.questions?.map((q, qIdx) => (
-                  <Card key={q.id} className="border-2 rounded-xl md:rounded-2xl overflow-hidden shadow-sm student-card-hover group">
-                    <CardHeader className="bg-muted/30 py-3 md:py-4 px-4 md:px-6 flex flex-row justify-between items-center transition-colors group-hover:bg-primary/5">
+                  <Card key={q.id} className="border-2 rounded-xl md:rounded-2xl overflow-hidden shadow-sm group bg-card">
+                    <CardHeader className="bg-muted/30 py-3 md:py-4 px-4 md:px-6 flex flex-row justify-between items-center">
                       <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
                         <span className="font-black text-base md:text-lg text-foreground whitespace-nowrap">#{qIdx + 1}</span>
                         <Tabs 
@@ -388,21 +404,19 @@ export default function QuizManagement() {
                     <CardContent className="p-4 md:p-6 space-y-6">
                       <div className="space-y-2">
                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Pertanyaan</label>
-                         <div className="flex gap-2">
-                           <Input 
-                            placeholder="Masukkan teks pertanyaan di sini..." 
-                            value={q.text}
-                            onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
-                            className="h-10 md:h-12 font-bold text-base md:text-lg border-2 focus:ring-primary/20 text-foreground" 
-                          />
-                          <MathButton onSelect={(s) => appendSymbol(qIdx, 'text', s)} />
-                         </div>
+                         <Input 
+                          placeholder="Masukkan teks pertanyaan di sini..." 
+                          value={q.text}
+                          onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
+                          className="h-10 md:h-12 font-bold text-base md:text-lg border-2 focus:ring-primary/20 text-foreground" 
+                        />
+                        <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'text', s)} />
                       </div>
                       
                       {q.type === 'multiple-choice' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                           {q.options.map((opt, oIdx) => (
-                            <div key={oIdx} className="space-y-1">
+                            <div key={oIdx} className="space-y-2 p-3 rounded-xl border-2 bg-muted/10">
                               <div className="flex gap-2 items-center">
                                 <Button 
                                   variant={q.correctAnswer === oIdx ? "default" : "outline"}
@@ -412,35 +426,31 @@ export default function QuizManagement() {
                                 >
                                   {String.fromCharCode(65 + oIdx)}
                                 </Button>
-                                <div className="flex-1 flex gap-1 md:gap-2">
-                                  <Input 
-                                    placeholder={`Pilihan ${String.fromCharCode(65 + oIdx)}`}
-                                    value={opt}
-                                    onChange={(e) => {
-                                      const newOpts = [...q.options];
-                                      newOpts[oIdx] = e.target.value;
-                                      updateQuestion(qIdx, 'options', newOpts);
-                                    }}
-                                    className={cn("h-10 font-medium text-foreground text-sm", q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : '')}
-                                  />
-                                  <MathButton onSelect={(s) => appendSymbol(qIdx, 'option', s, oIdx)} />
-                                </div>
+                                <Input 
+                                  placeholder={`Pilihan ${String.fromCharCode(65 + oIdx)}`}
+                                  value={opt}
+                                  onChange={(e) => {
+                                    const newOpts = [...q.options];
+                                    newOpts[oIdx] = e.target.value;
+                                    updateQuestion(qIdx, 'options', newOpts);
+                                  }}
+                                  className={cn("h-10 font-medium text-foreground text-sm", q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : '')}
+                                />
                               </div>
+                              <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'option', s, oIdx)} />
                             </div>
                           ))}
                         </div>
                       ) : (
                         <div className="space-y-2 pt-2">
                            <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Jawaban Benar</label>
-                           <div className="flex gap-2">
-                             <Input 
-                              placeholder="Masukkan kunci jawaban..." 
-                              value={q.correctAnswer as string}
-                              onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
-                              className="h-10 md:h-12 font-black text-base md:text-lg border-2 border-primary/20 focus:border-primary text-foreground" 
-                            />
-                            <MathButton onSelect={(s) => appendSymbol(qIdx, 'correctAnswer', s)} />
-                           </div>
+                           <Input 
+                            placeholder="Masukkan kunci jawaban..." 
+                            value={q.correctAnswer as string}
+                            onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
+                            className="h-10 md:h-12 font-black text-base md:text-lg border-2 border-primary/20 focus:border-primary text-foreground" 
+                          />
+                          <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'correctAnswer', s)} />
                           <p className="text-[10px] font-bold text-muted-foreground ml-1 italic">*Huruf besar/kecil diabaikan saat koreksi.</p>
                         </div>
                       )}
@@ -458,6 +468,53 @@ export default function QuizManagement() {
             <Button onClick={handleSaveQuiz} className="h-12 md:h-14 px-8 md:px-10 rounded-xl font-black text-base md:text-lg shadow-lg w-full sm:w-auto order-1 sm:order-2">
               <Save className="mr-2" /> Simpan Kuis
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Dialog */}
+      <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+        <DialogContent className="max-w-2xl rounded-[2rem] border-none shadow-2xl p-0 overflow-hidden">
+          <div className="bg-accent p-8 text-white">
+            <div className="flex items-center gap-4">
+               <Upload size={32} />
+               <div>
+                  <DialogTitle className="text-2xl font-black">Upload Banyak Soal</DialogTitle>
+                  <DialogDescription className="text-white/80 font-bold">Tempelkan data soal dalam format JSON di bawah ini.</DialogDescription>
+               </div>
+            </div>
+          </div>
+          <div className="p-8 space-y-6">
+            <div className="bg-primary/5 p-4 rounded-xl border-l-4 border-primary space-y-2">
+               <div className="flex items-center gap-2 text-primary font-black text-xs uppercase tracking-widest">
+                  <Info size={14} /> Contoh Format JSON
+               </div>
+               <pre className="text-[10px] font-mono bg-black/5 p-2 rounded overflow-auto text-muted-foreground">
+{`[
+  {
+    "type": "multiple-choice",
+    "text": "1 + 1 = ?",
+    "options": ["1", "2", "3", "4"],
+    "correctAnswer": 1
+  },
+  {
+    "type": "short-answer",
+    "text": "Siapa penemu lampu?",
+    "correctAnswer": "Thomas Edison"
+  }
+]`}
+               </pre>
+            </div>
+            <Textarea 
+              value={uploadJson}
+              onChange={(e) => setUploadJson(e.target.value)}
+              placeholder='Paste JSON di sini...'
+              className="min-h-[200px] font-mono text-sm border-2 rounded-xl"
+            />
+          </div>
+          <DialogFooter className="p-8 bg-muted/20 border-t flex gap-3">
+            <Button variant="outline" onClick={() => setIsUploadOpen(false)} className="h-14 px-8 rounded-xl font-black text-foreground">Batal</Button>
+            <Button onClick={handleBulkUpload} className="h-14 px-10 rounded-xl font-black shadow-lg bg-accent hover:bg-accent/90">Mulai Impor</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
