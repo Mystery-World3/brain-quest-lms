@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, Save, Upload, Info, Check, Sigma, Type, List } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Save, Upload, Info, Check, Sigma, Type, List, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -491,29 +492,29 @@ export default function QuizManagement() {
 
       {/* UPLOAD DIALOG */}
       <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-        <DialogContent className="max-w-2xl rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-[#0a0c10] text-white">
-          <div className="bg-primary p-10 text-white relative">
+        <DialogContent className="max-w-2xl w-[95vw] md:w-full rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-[#0a0c10] text-white">
+          <div className="bg-primary p-6 md:p-10 text-white relative">
             <div className="absolute top-0 right-0 p-8 opacity-10">
                <Upload size={120} />
             </div>
-            <div className="flex items-center gap-6 relative z-10">
-               <div className="bg-white/20 p-5 rounded-[1.5rem] shadow-inner ring-4 ring-white/10">
-                 <Upload size={32} />
+            <div className="flex items-center gap-4 md:gap-6 relative z-10">
+               <div className="bg-white/20 p-4 md:p-5 rounded-[1.5rem] shadow-inner ring-4 ring-white/10">
+                 <Upload size={24} />
                </div>
                <div>
-                  <DialogTitle className="text-3xl font-black tracking-tight">Impor Bank Soal</DialogTitle>
-                  <DialogDescription className="text-white/60 font-bold text-lg">Gunakan format JSON untuk menambah banyak soal secara instan.</DialogDescription>
+                  <DialogTitle className="text-2xl md:text-3xl font-black tracking-tight">Impor Bank Soal</DialogTitle>
+                  <DialogDescription className="text-white/60 font-bold text-sm md:text-lg">Gunakan format JSON untuk impor massal.</DialogDescription>
                </div>
             </div>
           </div>
           
-          <div className="p-10 space-y-8">
-            <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4 shadow-inner">
+          <div className="p-6 md:p-10 space-y-6 md:space-y-8">
+            <div className="bg-white/5 p-4 md:p-6 rounded-3xl border border-white/10 space-y-3 shadow-inner">
                <div className="flex items-center gap-2 text-primary font-black text-xs uppercase tracking-[0.2em]">
                   <Info size={16} /> Contoh Struktur Data
                </div>
-               <ScrollArea className="h-40">
-                <pre className="text-[11px] font-mono bg-black/40 p-5 rounded-2xl text-white/60 leading-relaxed border border-white/5">
+               <ScrollArea className="h-32 md:h-40">
+                <pre className="text-[10px] md:text-[11px] font-mono bg-black/40 p-4 md:p-5 rounded-2xl text-white/60 leading-relaxed border border-white/5">
 {`[
   {
     "type": "multiple-choice",
@@ -531,28 +532,28 @@ export default function QuizManagement() {
                </ScrollArea>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className="text-xs font-black uppercase tracking-widest text-white/40 ml-1">Tempelkan JSON di sini</label>
               <Textarea 
                 value={uploadJson}
                 onChange={(e) => setUploadJson(e.target.value)}
                 placeholder='[ { "type": "multiple-choice", ... }, ... ]'
-                className="min-h-[250px] font-mono text-sm bg-white/5 border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:ring-primary/40 focus:border-primary shadow-inner"
+                className="min-h-[150px] md:min-h-[250px] font-mono text-sm bg-white/5 border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:ring-primary/40 focus:border-primary shadow-inner"
               />
             </div>
           </div>
 
-          <DialogFooter className="p-10 bg-white/5 border-t border-white/5 flex flex-row gap-3">
+          <DialogFooter className="p-6 md:p-10 bg-white/5 border-t border-white/5 flex flex-col sm:flex-row gap-3">
             <Button 
               variant="ghost" 
               onClick={() => setIsUploadOpen(false)} 
-              className="flex-1 h-16 rounded-2xl font-black text-white/40 hover:text-white hover:bg-white/5"
+              className="h-14 rounded-2xl font-black text-white/40 hover:text-white hover:bg-white/5 w-full sm:w-auto"
             >
               Batal
             </Button>
             <Button 
               onClick={handleBulkUpload} 
-              className="flex-[2] h-16 rounded-2xl font-black shadow-2xl bg-primary hover:bg-primary/90 text-white ring-4 ring-primary/20"
+              className="flex-1 h-14 md:h-16 rounded-2xl font-black shadow-2xl bg-primary hover:bg-primary/90 text-white ring-4 ring-primary/20 w-full sm:w-auto"
             >
               Mulai Impor Data <Check className="ml-2" />
             </Button>
