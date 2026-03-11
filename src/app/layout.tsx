@@ -1,12 +1,11 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'LKPD Digital Interaktif',
-  description: 'Website pendukung pembelajaran interaktif untuk siswa dan guru.',
+  title: 'BrainQuest Digital',
+  description: 'Platform kuis interaktif modern untuk mendukung proses belajar mengajar yang lebih seru.',
 };
 
 export default function RootLayout({

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -109,7 +108,7 @@ export default function TeacherLoginPage() {
       </Card>
       
       <p className="absolute bottom-8 text-muted-foreground/40 text-[10px] font-black uppercase tracking-[0.5em]">
-        © 2024 LKPD DIGITAL INTERAKTIF
+        © 2024 BRAINQUEST DIGITAL
       </p>
     </div>
   );

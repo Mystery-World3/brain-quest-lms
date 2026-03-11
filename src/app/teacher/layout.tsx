@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -35,7 +34,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         <div className="bg-primary p-2.5 rounded-xl text-white shadow-lg shadow-primary/20">
           <GraduationCap size={24} />
         </div>
-        <span className="font-headline font-black text-xl text-primary tracking-tighter">GURU PANEL</span>
+        <span className="font-headline font-black text-xl text-primary tracking-tighter uppercase">BrainQuest</span>
       </div>
       
       <div className="flex-1 px-4 space-y-2 py-6 overflow-y-auto">

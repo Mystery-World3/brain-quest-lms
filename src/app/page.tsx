@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -50,7 +49,7 @@ export default function LandingPage() {
             <div className="bg-primary p-2.5 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
               <GraduationCap size={28} />
             </div>
-            <span className="font-headline font-black text-xl hidden sm:block text-primary tracking-tighter">LKPD DIGITAL</span>
+            <span className="font-headline font-black text-xl hidden sm:block text-primary tracking-tighter">BRAINQUEST</span>
           </div>
         </Link>
       </div>
