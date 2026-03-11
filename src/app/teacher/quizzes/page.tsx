@@ -10,11 +10,21 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus, Type, List } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, BookOpen, Save, X, ListPlus, Type, List, Sigma } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from '@/lib/utils';
+
+const mathSymbols = [
+  "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
+  "x", "x₁", "x₂", "y", "y₁", "y₂", "r", "r₁", "r₂", "m",
+  "+", "-", "×", "÷", "·", "=", "≠", "≈", "→", "±", "√", "π",
+  "²", "³", "ⁿ", "°", "<", ">", "≤", "≥",
+  "(", ")", "[", "]", "{", "}"
+];
 
 export default function QuizManagement() {
   const { toast } = useToast();
@@ -139,7 +149,6 @@ export default function QuizManagement() {
       const newQuestions = [...editingQuiz.questions];
       newQuestions[idx] = { ...newQuestions[idx], [field]: value };
       
-      // Reset correctAnswer if type changes
       if (field === 'type') {
         newQuestions[idx].correctAnswer = value === 'multiple-choice' ? 0 : '';
       }
@@ -147,6 +156,52 @@ export default function QuizManagement() {
       setEditingQuiz({ ...editingQuiz, questions: newQuestions });
     }
   };
+
+  const appendSymbol = (idx: number, field: string, symbol: string, optionIdx?: number) => {
+    if (!editingQuiz || !editingQuiz.questions) return;
+    const newQuestions = [...editingQuiz.questions];
+    
+    if (field === 'text') {
+      newQuestions[idx].text += symbol;
+    } else if (field === 'option' && typeof optionIdx === 'number') {
+      const newOptions = [...newQuestions[idx].options];
+      newOptions[optionIdx] += symbol;
+      newQuestions[idx].options = newOptions;
+    } else if (field === 'correctAnswer' && newQuestions[idx].type === 'short-answer') {
+      newQuestions[idx].correctAnswer = (newQuestions[idx].correctAnswer as string || '') + symbol;
+    }
+
+    setEditingQuiz({ ...editingQuiz, questions: newQuestions });
+  };
+
+  const MathKeyboard = ({ onSelect }: { onSelect: (s: string) => void }) => (
+    <div className="grid grid-cols-10 gap-1 p-2 bg-slate-900 rounded-xl border border-slate-700 shadow-2xl">
+      {mathSymbols.map(sym => (
+        <Button 
+          key={sym} 
+          variant="ghost" 
+          size="sm" 
+          className="h-10 w-10 p-0 text-white font-black text-sm hover:bg-primary hover:text-white transition-all rounded-lg"
+          onClick={() => onSelect(sym)}
+        >
+          {sym}
+        </Button>
+      ))}
+    </div>
+  );
+
+  const MathButton = ({ onSelect }: { onSelect: (s: string) => void }) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="icon" className="h-12 w-12 rounded-xl border-2 shrink-0 hover:bg-primary/10 transition-all">
+          <Sigma className="w-5 h-5 text-primary" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-fit p-0 border-none bg-transparent" side="top" align="end">
+        <MathKeyboard onSelect={onSelect} />
+      </PopoverContent>
+    </Popover>
+  );
 
   return (
     <div className="space-y-8">
@@ -222,7 +277,7 @@ export default function QuizManagement() {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] border-none shadow-2xl p-0">
-          <div className="bg-primary p-8 text-white sticky top-0 z-10">
+          <div className="bg-primary p-8 text-white sticky top-0 z-50">
             <DialogHeader>
               <DialogTitle className="text-3xl font-headline font-black">
                 {editingQuiz?.id?.includes('quiz-') ? 'Edit Kuis' : 'Buat Kuis Baru'}
@@ -311,15 +366,18 @@ export default function QuizManagement() {
                       <Trash2 size={20} />
                     </Button>
                   </CardHeader>
-                  <CardContent className="p-6 space-y-4">
+                  <CardContent className="p-6 space-y-6">
                     <div className="space-y-2">
                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Pertanyaan</label>
-                       <Input 
-                        placeholder="Masukkan teks pertanyaan di sini..." 
-                        value={q.text}
-                        onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
-                        className="h-12 font-bold text-lg border-2 focus:ring-primary/20" 
-                      />
+                       <div className="flex gap-2">
+                         <Input 
+                          placeholder="Masukkan teks pertanyaan di sini..." 
+                          value={q.text}
+                          onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
+                          className="h-12 font-bold text-lg border-2 focus:ring-primary/20" 
+                        />
+                        <MathButton onSelect={(s) => appendSymbol(qIdx, 'text', s)} />
+                       </div>
                     </div>
                     
                     {q.type === 'multiple-choice' ? (
@@ -335,16 +393,19 @@ export default function QuizManagement() {
                               >
                                 {String.fromCharCode(65 + oIdx)}
                               </Button>
-                              <Input 
-                                placeholder={`Pilihan ${String.fromCharCode(65 + oIdx)}`}
-                                value={opt}
-                                onChange={(e) => {
-                                  const newOpts = [...q.options];
-                                  newOpts[oIdx] = e.target.value;
-                                  updateQuestion(qIdx, 'options', newOpts);
-                                }}
-                                className={`h-10 font-medium ${q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : ''}`}
-                              />
+                              <div className="flex-1 flex gap-2">
+                                <Input 
+                                  placeholder={`Pilihan ${String.fromCharCode(65 + oIdx)}`}
+                                  value={opt}
+                                  onChange={(e) => {
+                                    const newOpts = [...q.options];
+                                    newOpts[oIdx] = e.target.value;
+                                    updateQuestion(qIdx, 'options', newOpts);
+                                  }}
+                                  className={cn("h-10 font-medium", q.correctAnswer === oIdx ? 'border-primary ring-1 ring-primary/20' : '')}
+                                />
+                                <MathButton onSelect={(s) => appendSymbol(qIdx, 'option', s, oIdx)} />
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -352,12 +413,15 @@ export default function QuizManagement() {
                     ) : (
                       <div className="space-y-2 pt-2">
                          <label className="text-[10px] font-black uppercase tracking-widest text-primary ml-1">Jawaban Benar</label>
-                         <Input 
-                          placeholder="Masukkan kunci jawaban yang benar..." 
-                          value={q.correctAnswer as string}
-                          onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
-                          className="h-12 font-black text-lg border-2 border-primary/20 focus:border-primary" 
-                        />
+                         <div className="flex gap-2">
+                           <Input 
+                            placeholder="Masukkan kunci jawaban yang benar..." 
+                            value={q.correctAnswer as string}
+                            onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
+                            className="h-12 font-black text-lg border-2 border-primary/20 focus:border-primary" 
+                          />
+                          <MathButton onSelect={(s) => appendSymbol(qIdx, 'correctAnswer', s)} />
+                         </div>
                         <p className="text-[10px] font-bold text-muted-foreground ml-1 italic">*Sistem akan mengabaikan huruf besar/kecil saat mengoreksi.</p>
                       </div>
                     )}
@@ -366,7 +430,7 @@ export default function QuizManagement() {
               ))}
             </div>
           </div>
-          <DialogFooter className="p-8 bg-muted/20 border-t sticky bottom-0 flex gap-3">
+          <DialogFooter className="p-8 bg-muted/20 border-t sticky bottom-0 flex gap-3 z-50">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-xl font-black text-lg">
               <X className="mr-2" /> Batal
             </Button>
