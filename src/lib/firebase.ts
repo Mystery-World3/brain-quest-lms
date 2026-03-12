@@ -2,19 +2,20 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 /**
- * Konfigurasi Firebase menggunakan Environment Variables.
- * Anda harus memasukkan nilai asli dari Firebase Console ke dalam file .env.local
+ * Konfigurasi Firebase resmi dari Console User.
+ * Data ini menghubungkan aplikasi ke database Firestore Cloud.
  */
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyAFaXrjm_OvCjKAD8714K5IfZtResCo8nU",
+  authDomain: "brainquest-1fd17.firebaseapp.com",
+  projectId: "brainquest-1fd17",
+  storageBucket: "brainquest-1fd17.firebasestorage.app",
+  messagingSenderId: "94395132879",
+  appId: "1:94395132879:web:9a1ae56c370fd568d7c0ba",
+  measurementId: "G-LSPY9SGVW2"
 };
 
-// Inisialisasi Firebase (menghindari inisialisasi ganda saat hot-reload)
+// Inisialisasi Firebase (menghindari inisialisasi ganda)
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
