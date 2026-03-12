@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { initialQuizzes } from '@/lib/mock-data';
+import { getQuizzes, addScore } from '@/services/database';
 import { Quiz } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,24 +23,28 @@ export default function QuizPage() {
   const [answers, setAnswers] = useState<(string | number)[]>([]);
   const [studentName, setStudentName] = useState('');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const name = localStorage.getItem('student_name') || 'Siswa';
     setStudentName(name);
 
-    const savedQuizzesRaw = localStorage.getItem('app_quizzes');
-    let quizzesToSearch = initialQuizzes;
-    
-    if (savedQuizzesRaw) {
-      quizzesToSearch = JSON.parse(savedQuizzesRaw);
-    }
-
-    const foundQuiz = quizzesToSearch.find(q => q.classId === classId) || quizzesToSearch[0];
-    setQuiz(foundQuiz);
-    setAnswers(new Array(foundQuiz.questions.length).fill(-1));
+    const loadQuiz = async () => {
+      try {
+        const quizzes = await getQuizzes();
+        const foundQuiz = quizzes.find(q => q.classId === classId) || quizzes[0];
+        setQuiz(foundQuiz);
+        setAnswers(new Array(foundQuiz.questions.length).fill(-1));
+      } catch (err) {
+        console.error("Error fetching quiz:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadQuiz();
   }, [classId]);
 
-  if (!quiz) return (
+  if (loading || !quiz) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -77,7 +82,7 @@ export default function QuizPage() {
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     let scoreCount = 0;
     quiz.questions.forEach((q, i) => {
       const studentAnswer = answers[i];
@@ -92,32 +97,26 @@ export default function QuizPage() {
     
     const finalScore = (scoreCount / quiz.questions.length) * 100;
 
-    const result = {
-      score: finalScore,
-      answers,
-      quizId: quiz.id,
-      quizTitle: quiz.title,
-      classId: classId as string,
-      timestamp: new Date().toISOString()
-    };
-
-    // Save Score to Global List (Dashboard Guru)
-    const savedScoresRaw = localStorage.getItem('app_scores');
-    const allScores = savedScoresRaw ? JSON.parse(savedScoresRaw) : [];
-    
     const newScoreEntry = {
-      id: `res-${Date.now()}`,
       name: studentName,
       classId: classId as string,
       className: localStorage.getItem('student_class_name') || 'Kelas',
       quiz: quiz.title,
+      quizId: quiz.id,
       score: finalScore,
-      date: new Date().toISOString().split('T')[0]
+      answers, // Simpan jawaban untuk review nanti
+      date: new Date().toISOString().split('T')[0],
+      timestamp: new Date().toISOString()
     };
 
-    localStorage.setItem('app_scores', JSON.stringify([...allScores, newScoreEntry]));
-    localStorage.setItem('last_result', JSON.stringify(result));
-    router.push('/student/results');
+    try {
+      await addScore(newScoreEntry);
+      localStorage.setItem('last_result', JSON.stringify({ ...newScoreEntry, answers }));
+      router.push('/student/results');
+    } catch (err) {
+      console.error("Failed to save score:", err);
+      alert("Terjadi kesalahan saat menyimpan nilai. Silakan coba lagi.");
+    }
   };
 
   const isCurrentAnswered = answers[currentIdx] !== -1 && answers[currentIdx] !== '';

@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { classes as initialClasses } from '@/lib/mock-data';
+import { getClasses } from '@/services/database';
 import { Class } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -17,12 +18,21 @@ export default function LandingPage() {
   const [studentName, setStudentName] = useState<string>('');
   const [showNameInput, setShowNameInput] = useState(false);
   const [availableClasses, setAvailableClasses] = useState<Class[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const savedClasses = localStorage.getItem('app_classes');
-    const classesToFilter = savedClasses ? JSON.parse(savedClasses) : initialClasses;
-    setAvailableClasses(classesToFilter.filter((c: Class) => c.active));
+    const loadData = async () => {
+      try {
+        const classes = await getClasses();
+        setAvailableClasses(classes.filter(c => c.active));
+      } catch (error) {
+        console.error("Failed to load classes from Firestore:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
   const handleStart = () => {
@@ -65,7 +75,9 @@ export default function LandingPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 p-6 md:p-8">
-              {!showNameInput ? (
+              {loading ? (
+                <div className="text-center py-10 font-black text-muted-foreground animate-pulse">Memuat Kelas...</div>
+              ) : !showNameInput ? (
                 <div className="space-y-5 animate-in fade-in zoom-in-95 duration-500">
                   <div className="space-y-3">
                     <label className="text-[10px] md:text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Pilih Kelas</label>

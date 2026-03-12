@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { classes as initialClasses } from '@/lib/mock-data';
+import { listenToScores, getClasses, getQuizzes } from '@/services/database';
 import { Class } from '@/lib/types';
 import { Users, BookOpen, CheckCircle, TrendingUp, Clock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -15,17 +15,21 @@ export default function TeacherDashboard() {
   const [classes, setClasses] = useState<Class[]>([]);
 
   useEffect(() => {
-    const savedScores = localStorage.getItem('app_scores');
-    const savedQuizzes = localStorage.getItem('app_quizzes');
-    const savedClasses = localStorage.getItem('app_classes');
-    
-    if (savedScores) setScores(JSON.parse(savedScores));
-    if (savedQuizzes) setQuizzes(JSON.parse(savedQuizzes));
-    if (savedClasses) {
-      setClasses(JSON.parse(savedClasses));
-    } else {
-      setClasses(initialClasses);
-    }
+    // Load static once
+    const loadMaster = async () => {
+      const cls = await getClasses();
+      const qz = await getQuizzes();
+      setClasses(cls);
+      setQuizzes(qz);
+    };
+    loadMaster();
+
+    // Listen to scores real-time!
+    const unsubscribe = listenToScores((data) => {
+      setScores(data);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Calculate dynamic stats
@@ -50,18 +54,16 @@ export default function TeacherDashboard() {
       ? Math.round(classScores.reduce((acc, s) => acc + s.score, 0) / classScores.length)
       : 0;
     return { name: cls.name.replace('Kelas ', ''), score: avg };
-  }).filter(d => d.score > 0 || quizzes.some(q => q.classId === classes.find(c => c.name.includes(d.name))?.id));
+  }).filter(d => d.score > 0 || quizzes.some(q => q.classId === classes.find(c => c.name?.includes(d.name))?.id));
 
-  // If no data yet, show some placeholder labels for the chart
   const finalChartData = chartData.length > 0 ? chartData : [
     { name: '7-A', score: 0 },
     { name: '7-B', score: 0 },
     { name: '8-A', score: 0 },
   ];
 
-  // Recent Activities from real scores
+  // Recent Activities
   const recentActivities = [...scores]
-    .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
     .slice(0, 5)
     .map(s => ({
       user: s.name,
