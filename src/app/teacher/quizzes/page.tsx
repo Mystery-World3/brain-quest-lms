@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, Save, Upload, Info, Check, Sigma, Type, List, X, BookOpen } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Save, Upload, Info, Check, Sigma, Type, List, X, BookOpen, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -35,9 +35,9 @@ export default function QuizManagement() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
   const [editingQuiz, setEditingQuiz] = useState<Partial<Quiz> | null>(null);
-  const [bulkCount, setBulkCount] = useState<number>(1);
-  const [uploadJson, setUploadJson] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploadJson, setUploadJson] = useState('');
   
   useEffect(() => {
     loadData();
@@ -69,29 +69,30 @@ export default function QuizManagement() {
 
   const confirmDelete = async () => {
     if (quizToDelete) {
+      setLoading(true);
       try {
         await deleteQuiz(quizToDelete);
-        loadData();
+        await loadData();
         toast({ title: "Kuis Dihapus", description: "Data kuis telah dihapus dari database." });
       } catch (err) {
         toast({ variant: 'destructive', title: 'Gagal Menghapus', description: 'Koneksi database bermasalah.' });
+      } finally {
+        setLoading(false);
       }
     }
     setIsConfirmOpen(false);
   };
 
   const openAddDialog = () => {
-    setBulkCount(1);
     setEditingQuiz({
       title: '',
       classId: '',
-      questions: [{ id: 'q1', type: 'multiple-choice', text: '', options: ['', '', '', ''], correctAnswer: 0, explanation: '' }]
+      questions: [{ id: `q-${Date.now()}`, type: 'multiple-choice', text: '', options: ['', '', '', ''], correctAnswer: 0, explanation: '' }]
     });
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (quiz: Quiz) => {
-    setBulkCount(1);
     setEditingQuiz({ ...quiz });
     setIsDialogOpen(true);
   };
@@ -102,13 +103,17 @@ export default function QuizManagement() {
       return;
     }
 
+    setIsSaving(true);
     try {
       await saveQuiz(editingQuiz);
-      loadData();
+      await loadData();
       setIsDialogOpen(false);
       toast({ title: "Berhasil Disimpan", description: `Kuis "${editingQuiz.title}" tersimpan di Cloud.` });
     } catch (err) {
-      toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: 'Gagal menghubungi database.' });
+      console.error("Error saving quiz:", err);
+      toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: 'Terjadi kesalahan saat menghubungi database.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -265,7 +270,7 @@ export default function QuizManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {loading && !isSaving ? (
                   <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold animate-pulse">Menghubungkan ke Database Cloud...</TableCell></TableRow>
                 ) : filteredQuizzes.map((quiz) => (
                   <TableRow key={quiz.id} className="hover:bg-primary/5 transition-colors group border-b">
@@ -467,12 +472,51 @@ export default function QuizManagement() {
           </ScrollArea>
 
           <DialogFooter className="p-4 md:p-8 bg-white/5 border-t border-white/5 flex flex-col sm:flex-row gap-4 shrink-0">
-            <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="h-12 md:h-14 px-8 rounded-xl md:rounded-2xl font-black text-white/40 hover:text-white w-full sm:w-auto">
+            <Button variant="ghost" onClick={() => setIsDialogOpen(false)} disabled={isSaving} className="h-12 md:h-14 px-8 rounded-xl md:rounded-2xl font-black text-white/40 hover:text-white w-full sm:w-auto">
               Batal
             </Button>
-            <Button onClick={handleSaveQuiz} className="h-12 md:h-14 px-10 md:px-12 rounded-xl md:rounded-2xl font-black text-lg shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 text-white w-full sm:w-auto">
-              <Save className="mr-2" /> Simpan Ke Cloud
+            <Button onClick={handleSaveQuiz} disabled={isSaving} className="h-12 md:h-14 px-10 md:px-12 rounded-xl md:rounded-2xl font-black text-lg shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 text-white w-full sm:w-auto">
+              {isSaving ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2" />} 
+              {isSaving ? 'Menyimpan...' : 'Simpan Ke Cloud'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogContent className="rounded-[2rem] w-[90vw] max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl md:text-2xl font-black text-red-600">Hapus Kuis?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base md:text-lg font-bold">
+              Data kuis ini akan dihapus secara permanen dari Cloud Database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-3 mt-4 flex-row">
+            <AlertDialogCancel className="flex-1 h-12 rounded-xl font-bold">Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="flex-1 h-12 rounded-xl bg-red-600 hover:bg-red-700 font-black">
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+        <DialogContent className="max-w-2xl rounded-[2rem] bg-card border-none shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">Import JSON Soal</DialogTitle>
+            <DialogDescription className="font-bold">Tempelkan format JSON soal yang valid di bawah ini.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea 
+              className="min-h-[300px] font-code text-xs" 
+              placeholder='[{"type": "multiple-choice", "text": "...", "options": ["A", "B", "C", "D"], "correctAnswer": 0}]'
+              value={uploadJson}
+              onChange={(e) => setUploadJson(e.target.value)}
+            />
+          </div>
+          <DialogFooter className="gap-3">
+             <Button variant="outline" onClick={() => setIsUploadOpen(false)} className="rounded-xl font-bold">Batal</Button>
+             <Button onClick={handleBulkUpload} className="rounded-xl font-black bg-primary">Proses Import</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -65,12 +65,15 @@ export default function ClassManagement() {
 
   const confirmDelete = async () => {
     if (classToDelete) {
+      setLoading(true);
       try {
         await deleteClass(classToDelete);
         await loadClasses();
         toast({ title: "Kelas Dihapus", description: "Data kelas telah dihapus secara permanen." });
       } catch (err) {
         toast({ variant: 'destructive', title: 'Gagal Menghapus', description: 'Data kelas tidak dapat dihapus.' });
+      } finally {
+        setLoading(false);
       }
     }
     setIsConfirmOpen(false);
@@ -145,7 +148,7 @@ export default function ClassManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {loading && !isSaving ? (
                   <TableRow><TableCell colSpan={3} className="text-center py-20 font-bold animate-pulse">Memuat data...</TableCell></TableRow>
                 ) : filteredClasses.map((cls) => (
                   <TableRow key={cls.id} className="hover:bg-primary/5 transition-colors group border-b">

@@ -63,11 +63,14 @@ export default function StudentScores() {
 
   const confirmDelete = async () => {
     if (scoreToDelete) {
+      setLoading(true);
       try {
         await deleteScore(scoreToDelete);
         toast({ title: "Nilai Dihapus", description: "Catatan nilai siswa telah dihapus dari database." });
       } catch (err) {
         toast({ variant: 'destructive', title: 'Gagal', description: 'Gagal menghapus data.' });
+      } finally {
+        setLoading(false);
       }
     }
     setIsConfirmOpen(false);
@@ -206,7 +209,7 @@ export default function StudentScores() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {loading && !isSaving ? (
                   <TableRow><TableCell colSpan={6} className="text-center py-20 font-bold animate-pulse">Menghubungkan ke Cloud Database...</TableCell></TableRow>
                 ) : filteredScores.map((item) => (
                   <TableRow key={item.id} className="hover:bg-primary/5 transition-colors group border-b">
