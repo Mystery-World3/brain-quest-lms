@@ -123,9 +123,9 @@ export default function LandingPage() {
         </div>
       </main>
       
-      <p className="w-full text-center pb-8 text-muted-foreground/40 text-[10px] font-black uppercase tracking-[0.5em] z-10 px-4">
+      <footer className="w-full text-center pb-8 text-muted-foreground/40 text-[10px] font-black uppercase tracking-[0.5em] z-10 px-4">
         © 2024 BRAINQUEST DIGITAL
-      </p>
+      </footer>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -308,14 +307,14 @@ export default function QuizManagement() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl w-[95vw] md:w-full max-h-[90vh] overflow-hidden flex flex-col rounded-[2.5rem] border-none shadow-2xl p-0 bg-[#0a0c10] text-white">
+        <DialogContent className="max-w-4xl w-[95vw] md:w-full max-h-[90vh] overflow-hidden flex flex-col rounded-[2rem] md:rounded-[2.5rem] border-none shadow-2xl p-0 bg-[#0a0c10] text-white">
           <div className="p-6 md:p-8 shrink-0">
             <DialogHeader className="flex flex-row justify-between items-start">
               <div className="space-y-1">
-                <DialogTitle className="text-2xl md:text-3xl font-headline font-black text-white">
+                <DialogTitle className="text-xl md:text-3xl font-headline font-black text-white">
                   {editingQuiz?.id?.includes('quiz-') ? 'Edit Kuis' : 'Tambah Soal Baru'}
                 </DialogTitle>
-                <DialogDescription className="text-white/40 font-bold text-sm">Sesuaikan informasi dan butir soal di bawah ini.</DialogDescription>
+                <DialogDescription className="text-white/40 font-bold text-xs md:text-sm">Sesuaikan informasi dan butir soal di bawah ini.</DialogDescription>
               </div>
               <Button 
                 onClick={() => setIsUploadOpen(true)}
@@ -327,22 +326,22 @@ export default function QuizManagement() {
             </DialogHeader>
           </div>
           
-          <ScrollArea className="flex-1 overflow-y-auto px-6 md:px-8">
-            <div className="space-y-10 pb-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <ScrollArea className="flex-1 overflow-y-auto px-4 md:px-8">
+            <div className="space-y-8 md:space-y-10 pb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/60 ml-1">Judul Kuis</label>
+                  <label className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/60 ml-1">Judul Kuis</label>
                   <Input 
                     placeholder="Contoh: Matematika - Persamaan Kuadrat" 
                     value={editingQuiz?.title || ''}
                     onChange={(e) => setEditingQuiz({ ...editingQuiz!, title: e.target.value })}
-                    className="h-14 rounded-xl border-white/10 bg-white/5 font-bold text-lg text-white" 
+                    className="h-12 md:h-14 rounded-xl border-white/10 bg-white/5 font-bold text-base md:text-lg text-white" 
                   />
                 </div>
                 <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/60 ml-1">Pilih Kelas</label>
+                  <label className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/60 ml-1">Pilih Kelas</label>
                   <Select value={editingQuiz?.classId || ''} onValueChange={(val) => setEditingQuiz({ ...editingQuiz!, classId: val })}>
-                    <SelectTrigger className="h-14 rounded-xl border-white/10 bg-white/5 font-bold text-lg text-white">
+                    <SelectTrigger className="h-12 md:h-14 rounded-xl border-white/10 bg-white/5 font-bold text-base md:text-lg text-white">
                       <SelectValue placeholder="Pilih Kelas" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a1d23] text-white border-white/10">
@@ -352,11 +351,11 @@ export default function QuizManagement() {
                 </div>
               </div>
 
-              <div className="space-y-12">
+              <div className="space-y-8 md:space-y-12">
                 {editingQuiz?.questions?.map((q, qIdx) => (
-                  <div key={q.id} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 bg-white/5 p-8 rounded-[2rem] border border-white/5 relative">
+                  <div key={q.id} className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 bg-white/5 p-4 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-white/5 relative">
                     <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                       <h3 className="text-xl font-black text-white flex items-center gap-3">
+                       <h3 className="text-lg md:text-xl font-black text-white flex items-center gap-2 md:gap-3">
                          Soal <span className="text-primary">#{qIdx + 1}</span>
                        </h3>
                        <div className="flex items-center gap-2">
@@ -365,8 +364,8 @@ export default function QuizManagement() {
                             onValueChange={(val) => updateQuestion(qIdx, 'type', val as QuestionType)}
                           >
                             <TabsList className="bg-white/10 border border-white/10 rounded-xl h-10 p-1">
-                              <TabsTrigger value="multiple-choice" className="data-[state=active]:bg-primary rounded-lg text-xs font-black">PG</TabsTrigger>
-                              <TabsTrigger value="short-answer" className="data-[state=active]:bg-primary rounded-lg text-xs font-black">Isian</TabsTrigger>
+                              <TabsTrigger value="multiple-choice" className="data-[state=active]:bg-primary rounded-lg text-[10px] md:text-xs font-black">PG</TabsTrigger>
+                              <TabsTrigger value="short-answer" className="data-[state=active]:bg-primary rounded-lg text-[10px] md:text-xs font-black">Isian</TabsTrigger>
                             </TabsList>
                           </Tabs>
                           <Button 
@@ -382,7 +381,7 @@ export default function QuizManagement() {
                     </div>
 
                     {/* PERTANYAAN */}
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                       <div className="flex items-center gap-2 text-white/40">
                          <Sigma size={14} className="text-primary" />
                          <span className="text-[10px] font-black uppercase tracking-widest">Keyboard Matematika (Pertanyaan)</span>
@@ -392,33 +391,33 @@ export default function QuizManagement() {
                         placeholder="Ketik pertanyaan di sini..." 
                         value={q.text}
                         onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)}
-                        className="h-16 rounded-2xl bg-white/10 border-white/10 font-medium text-lg text-white placeholder:text-white/20 px-6 focus:ring-primary/40 focus:border-primary" 
+                        className="h-14 md:h-16 rounded-xl md:rounded-2xl bg-white/10 border-white/10 font-medium text-base md:text-lg text-white placeholder:text-white/20 px-4 md:px-6 focus:ring-primary/40 focus:border-primary" 
                       />
                     </div>
                     
                     {/* OPSI / JAWABAN */}
-                    <div className="space-y-6">
-                      <h4 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <div className="space-y-4 md:space-y-6">
+                      <h4 className="text-[10px] md:text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
                         <Check size={16} className="text-primary" /> Konfigurasi Jawaban
                       </h4>
                       
                       {q.type === 'multiple-choice' ? (
-                        <div className="grid grid-cols-1 gap-6">
+                        <div className="grid grid-cols-1 gap-4 md:gap-6">
                           {q.options.map((opt, oIdx) => (
-                            <div key={oIdx} className="space-y-3">
+                            <div key={oIdx} className="space-y-2 md:space-y-3">
                               <div className="flex gap-3">
                                 <Button 
                                   variant={q.correctAnswer === oIdx ? "default" : "ghost"}
                                   size="icon"
                                   className={cn(
-                                    "shrink-0 h-14 w-14 rounded-2xl border transition-all",
+                                    "shrink-0 h-12 md:h-14 w-12 md:w-14 rounded-xl md:rounded-2xl border transition-all",
                                     q.correctAnswer === oIdx 
                                       ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" 
                                       : "bg-white/5 border-white/10 text-white/20 hover:text-white hover:bg-white/10"
                                   )}
                                   onClick={() => updateQuestion(qIdx, 'correctAnswer', oIdx)}
                                 >
-                                  {q.correctAnswer === oIdx ? <Check size={24} /> : <span className="font-black text-sm">{String.fromCharCode(65 + oIdx)}</span>}
+                                  {q.correctAnswer === oIdx ? <Check size={20} className="md:w-6 md:h-6" /> : <span className="font-black text-xs md:text-sm">{String.fromCharCode(65 + oIdx)}</span>}
                                 </Button>
                                 <Input 
                                   placeholder={`Opsi ${String.fromCharCode(65 + oIdx)}`}
@@ -428,7 +427,7 @@ export default function QuizManagement() {
                                     newOpts[oIdx] = e.target.value;
                                     updateQuestion(qIdx, 'options', newOpts);
                                   }}
-                                  className="h-14 bg-white/5 border-white/10 rounded-2xl text-white font-medium px-6 focus:ring-primary/40 focus:border-primary"
+                                  className="h-12 md:h-14 bg-white/5 border-white/10 rounded-xl md:rounded-2xl text-white font-medium px-4 md:px-6 focus:ring-primary/40 focus:border-primary"
                                 />
                               </div>
                               <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'option', s, oIdx)} />
@@ -436,17 +435,17 @@ export default function QuizManagement() {
                           ))}
                         </div>
                       ) : (
-                        <div className="space-y-4">
-                           <div className="flex bg-primary/10 p-4 rounded-2xl border border-primary/20 items-center gap-4">
-                              <div className="bg-primary p-3 rounded-xl text-white shadow-lg">
-                                <Check size={20} />
+                        <div className="space-y-3 md:space-y-4">
+                           <div className="flex bg-primary/10 p-3 md:p-4 rounded-xl md:rounded-2xl border border-primary/20 items-center gap-3 md:gap-4">
+                              <div className="bg-primary p-2 md:p-3 rounded-lg md:rounded-xl text-white shadow-lg">
+                                <Check size={18} className="md:w-5 md:h-5" />
                               </div>
                               <div className="flex-1">
                                 <Input 
                                   placeholder="Ketik kunci jawaban isian..." 
                                   value={q.correctAnswer as string}
                                   onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)}
-                                  className="bg-transparent border-none text-xl font-black text-white placeholder:text-white/20 focus-visible:ring-0 p-0 h-auto" 
+                                  className="bg-transparent border-none text-lg md:text-xl font-black text-white placeholder:text-white/20 focus-visible:ring-0 p-0 h-auto" 
                                 />
                               </div>
                            </div>
@@ -456,7 +455,7 @@ export default function QuizManagement() {
                     </div>
 
                     {/* PEMBAHASAN / CARA PENGERJAAN */}
-                    <div className="space-y-4 pt-4 border-t border-white/5">
+                    <div className="space-y-3 md:space-y-4 pt-4 border-t border-white/5">
                       <div className="flex items-center gap-2 text-white/40">
                          <BookOpen size={14} className="text-primary" />
                          <span className="text-[10px] font-black uppercase tracking-widest">Pembahasan / Cara Pengerjaan (Opsional)</span>
@@ -466,16 +465,16 @@ export default function QuizManagement() {
                         placeholder="Tuliskan langkah-langkah penyelesaian agar siswa paham..." 
                         value={q.explanation || ''}
                         onChange={(e) => updateQuestion(qIdx, 'explanation', e.target.value)}
-                        className="min-h-[100px] rounded-2xl bg-white/5 border-white/10 font-medium text-white placeholder:text-white/20 px-6 focus:ring-primary/40 focus:border-primary" 
+                        className="min-h-[80px] md:min-h-[100px] rounded-xl md:rounded-2xl bg-white/5 border-white/10 font-medium text-white placeholder:text-white/20 px-4 md:px-6 focus:ring-primary/40 focus:border-primary" 
                       />
                     </div>
                   </div>
                 ))}
 
-                <div className="flex justify-center pt-8">
-                  <div className="flex items-center gap-3 bg-white/5 p-3 rounded-[2rem] border border-white/10 shadow-2xl">
-                    <div className="flex flex-col items-center px-4">
-                      <span className="text-[10px] font-black text-white/40 uppercase mb-1">Jumlah</span>
+                <div className="flex justify-center pt-4 md:pt-8">
+                  <div className="flex flex-col sm:flex-row items-center gap-3 bg-white/5 p-3 rounded-[1.5rem] md:rounded-[2rem] border border-white/10 shadow-2xl w-full sm:w-auto">
+                    <div className="flex items-center gap-3 px-4 w-full sm:w-auto justify-center">
+                      <span className="text-[10px] font-black text-white/40 uppercase">Jumlah</span>
                       <Input 
                         type="number" 
                         min={1} 
@@ -488,7 +487,7 @@ export default function QuizManagement() {
                     <Button 
                       onClick={() => addQuestions(bulkCount)} 
                       variant="outline" 
-                      className="rounded-2xl font-black h-14 px-8 bg-primary hover:bg-primary/90 border-none text-white shadow-xl shadow-primary/20"
+                      className="w-full sm:w-auto rounded-xl md:rounded-2xl font-black h-12 md:h-14 px-6 md:px-8 bg-primary hover:bg-primary/90 border-none text-white shadow-xl shadow-primary/20"
                     >
                       <Plus className="mr-2 h-5 w-5" /> {bulkCount > 1 ? `Tambah ${bulkCount} Soal` : 'Tambah 1 Soal Baru'}
                     </Button>
@@ -498,42 +497,41 @@ export default function QuizManagement() {
             </div>
           </ScrollArea>
 
-          <DialogFooter className="p-6 md:p-8 bg-white/5 border-t border-white/5 flex flex-col sm:flex-row gap-4 shrink-0">
-            <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="h-14 px-8 rounded-2xl font-black text-lg text-white/40 hover:text-white hover:bg-white/5 w-full sm:w-auto order-2 sm:order-1">
+          <DialogFooter className="p-4 md:p-8 bg-white/5 border-t border-white/5 flex flex-col sm:flex-row gap-4 shrink-0">
+            <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="h-12 md:h-14 px-8 rounded-xl md:rounded-2xl font-black text-lg text-white/40 hover:text-white hover:bg-white/5 w-full sm:w-auto order-2 sm:order-1">
               Batal
             </Button>
-            <Button onClick={handleSaveQuiz} className="h-14 px-12 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 text-white w-full sm:w-auto order-1 sm:order-2">
+            <Button onClick={handleSaveQuiz} className="h-12 md:h-14 px-10 md:px-12 rounded-xl md:rounded-2xl font-black text-lg shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 text-white w-full sm:w-auto order-1 sm:order-2">
               <Save className="mr-2" /> Simpan Seluruh Kuis
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* UPLOAD DIALOG */}
       <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-        <DialogContent className="max-w-2xl w-[95vw] md:w-full rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-[#0a0c10] text-white">
+        <DialogContent className="max-w-2xl w-[95vw] md:w-full rounded-[2rem] md:rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-[#0a0c10] text-white">
           <div className="bg-primary p-6 md:p-10 text-white relative">
-            <div className="absolute top-0 right-0 p-8 opacity-10">
+            <div className="absolute top-0 right-0 p-8 opacity-10 hidden sm:block">
                <Upload size={120} />
             </div>
             <div className="flex items-center gap-4 md:gap-6 relative z-10">
-               <div className="bg-white/20 p-4 md:p-5 rounded-[1.5rem] shadow-inner ring-4 ring-white/10">
+               <div className="bg-white/20 p-3 md:p-5 rounded-xl md:rounded-[1.5rem] shadow-inner ring-4 ring-white/10">
                  <Upload size={24} />
                </div>
                <div>
-                  <DialogTitle className="text-2xl md:text-3xl font-black tracking-tight">Impor Bank Soal</DialogTitle>
-                  <DialogDescription className="text-white/60 font-bold text-sm md:text-lg">Gunakan format JSON untuk impor massal.</DialogDescription>
+                  <DialogTitle className="text-xl md:text-3xl font-black tracking-tight">Impor Bank Soal</DialogTitle>
+                  <DialogDescription className="text-white/60 font-bold text-xs md:text-lg">Gunakan format JSON untuk impor massal.</DialogDescription>
                </div>
             </div>
           </div>
           
-          <div className="p-6 md:p-10 space-y-6 md:space-y-8">
-            <div className="bg-white/5 p-4 md:p-6 rounded-3xl border border-white/10 space-y-3 shadow-inner">
-               <div className="flex items-center gap-2 text-primary font-black text-xs uppercase tracking-[0.2em]">
+          <div className="p-4 md:p-10 space-y-6 md:space-y-8">
+            <div className="bg-white/5 p-4 md:p-6 rounded-2xl md:rounded-3xl border border-white/10 space-y-3 shadow-inner">
+               <div className="flex items-center gap-2 text-primary font-black text-[10px] md:text-xs uppercase tracking-[0.2em]">
                   <Info size={16} /> Contoh Struktur Data
                </div>
-               <ScrollArea className="h-32 md:h-40">
-                <pre className="text-[10px] md:text-[11px] font-mono bg-black/40 p-4 md:p-5 rounded-2xl text-white/60 leading-relaxed border border-white/5">
+               <ScrollArea className="h-24 md:h-40">
+                <pre className="text-[10px] md:text-[11px] font-mono bg-black/40 p-3 md:p-5 rounded-xl md:rounded-2xl text-white/60 leading-relaxed border border-white/5">
 {`[
   {
     "type": "multiple-choice",
@@ -554,27 +552,27 @@ export default function QuizManagement() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-white/40 ml-1">Tempelkan JSON di sini</label>
+              <label className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/40 ml-1">Tempelkan JSON di sini</label>
               <Textarea 
                 value={uploadJson}
                 onChange={(e) => setUploadJson(e.target.value)}
                 placeholder='[ { "type": "multiple-choice", ... }, ... ]'
-                className="min-h-[150px] md:min-h-[250px] font-mono text-sm bg-white/5 border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:ring-primary/40 focus:border-primary shadow-inner"
+                className="min-h-[120px] md:min-h-[250px] font-mono text-xs md:text-sm bg-white/5 border-white/10 rounded-xl md:rounded-2xl text-white placeholder:text-white/20 focus:ring-primary/40 focus:border-primary shadow-inner"
               />
             </div>
           </div>
 
-          <DialogFooter className="p-6 md:p-10 bg-white/5 border-t border-white/5 flex flex-col sm:flex-row gap-3">
+          <DialogFooter className="p-4 md:p-10 bg-white/5 border-t border-white/5 flex flex-col sm:flex-row gap-3">
             <Button 
               variant="ghost" 
               onClick={() => setIsUploadOpen(false)} 
-              className="h-14 rounded-2xl font-black text-white/40 hover:text-white hover:bg-white/5 w-full sm:w-auto"
+              className="h-12 md:h-14 rounded-xl md:rounded-2xl font-black text-white/40 hover:text-white hover:bg-white/5 w-full sm:w-auto"
             >
               Batal
             </Button>
             <Button 
               onClick={handleBulkUpload} 
-              className="flex-1 h-14 md:h-16 rounded-2xl font-black shadow-2xl bg-primary hover:bg-primary/90 text-white ring-4 ring-primary/20 w-full sm:w-auto"
+              className="flex-1 h-12 md:h-16 rounded-xl md:rounded-2xl font-black shadow-2xl bg-primary hover:bg-primary/90 text-white ring-4 ring-primary/20 w-full sm:w-auto"
             >
               Mulai Impor Data <Check className="ml-2" />
             </Button>
@@ -583,16 +581,16 @@ export default function QuizManagement() {
       </Dialog>
 
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <AlertDialogContent className="rounded-[2.5rem] w-[90vw] max-w-lg bg-[#0a0c10] border-white/10 text-white">
+        <AlertDialogContent className="rounded-[1.5rem] md:rounded-[2.5rem] w-[90vw] max-w-lg bg-[#0a0c10] border-white/10 text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-white">Hapus Kuis?</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/40 text-lg font-bold">
+            <AlertDialogTitle className="text-xl md:text-2xl font-black text-white">Hapus Kuis?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/40 text-base md:text-lg font-bold">
               Tindakan ini tidak dapat dibatalkan. Seluruh data kuis dan progres siswa yang terkait akan ikut terhapus secara permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-8">
-            <AlertDialogCancel className="h-14 rounded-2xl font-bold bg-white/5 border-white/10 text-white hover:bg-white/10 w-full sm:w-auto">Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="h-14 rounded-2xl bg-red-600 hover:bg-red-700 font-black text-white w-full sm:w-auto shadow-xl shadow-red-900/20">
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-3 mt-6 md:mt-8">
+            <AlertDialogCancel className="h-12 md:h-14 rounded-xl md:rounded-2xl font-bold bg-white/5 border-white/10 text-white hover:bg-white/10 w-full sm:w-auto">Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="h-12 md:h-14 rounded-xl md:rounded-2xl bg-red-600 hover:bg-red-700 font-black text-white w-full sm:w-auto shadow-xl shadow-red-900/20">
               Hapus Permanen
             </AlertDialogAction>
           </AlertDialogFooter>

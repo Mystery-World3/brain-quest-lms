@@ -83,7 +83,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
-        <header className="h-20 bg-card/80 backdrop-blur-md border-b border-border/50 flex items-center justify-between px-8 z-10">
+        <header className="h-20 bg-card/80 backdrop-blur-md border-b border-border/50 flex items-center justify-between px-4 md:px-8 z-10 shrink-0">
           <div className="flex items-center gap-4">
             <Sheet>
               <SheetTrigger asChild>
@@ -95,18 +95,18 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                 <NavContent />
               </SheetContent>
             </Sheet>
-            <h2 className="font-black text-2xl hidden sm:block text-foreground tracking-tight">
+            <h2 className="font-black text-xl md:text-2xl text-foreground tracking-tight truncate max-w-[200px] sm:max-w-none">
               {navItems.find(item => item.path === pathname)?.name || 'Dashboard'}
             </h2>
           </div>
           <div className="flex items-center gap-4">
-             <div className="flex items-center gap-3 px-5 py-2.5 bg-primary/10 rounded-2xl text-primary ring-2 ring-primary/5 shadow-inner">
-                <Users size={20} />
-                <span className="text-xs font-black uppercase tracking-[0.2em] hidden lg:inline">Guru Aktif</span>
+             <div className="flex items-center gap-3 px-4 md:px-5 py-2 md:py-2.5 bg-primary/10 rounded-xl md:rounded-2xl text-primary ring-2 ring-primary/5 shadow-inner">
+                <Users size={18} className="md:w-5 md:h-5" />
+                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] hidden sm:inline">Guru Aktif</span>
              </div>
           </div>
         </header>
-        <div className="flex-1 overflow-auto p-6 md:p-10 bg-muted/20">
+        <div className="flex-1 overflow-auto p-4 md:p-10 bg-muted/20">
           <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
           </div>
