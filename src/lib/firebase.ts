@@ -3,8 +3,7 @@ import { getFirestore } from 'firebase/firestore';
 
 /**
  * Konfigurasi Firebase menggunakan Environment Variables.
- * Nilai asli harus dimasukkan di file .env.local (untuk lokal) 
- * atau di Dashboard Hosting (untuk produksi).
+ * Nilai asli diambil dari file .env.local (lokal) atau settings hosting (produksi).
  */
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
