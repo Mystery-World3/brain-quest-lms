@@ -30,12 +30,15 @@ export const getClasses = async () => {
 };
 
 export const saveClass = async (classData: Partial<Class>) => {
-  if (classData.id && !classData.id.startsWith('class-')) {
-    const { id, ...rest } = classData;
-    await setDoc(doc(db, CLASSES_COL, id!), rest, { merge: true });
+  const { id, ...data } = classData;
+  if (id && !id.startsWith('temp-')) {
+    // Update existing Firestore document
+    const docRef = doc(db, CLASSES_COL, id);
+    await updateDoc(docRef, data);
     return id;
   } else {
-    const docRef = await addDoc(collection(db, CLASSES_COL), classData);
+    // Add new document
+    const docRef = await addDoc(collection(db, CLASSES_COL), data);
     return docRef.id;
   }
 };
@@ -53,12 +56,15 @@ export const getQuizzes = async () => {
 };
 
 export const saveQuiz = async (quizData: Partial<Quiz>) => {
-  if (quizData.id && !quizData.id.startsWith('quiz-')) {
-    const { id, ...rest } = quizData;
-    await setDoc(doc(db, QUIZZES_COL, id!), rest, { merge: true });
+  const { id, ...data } = quizData;
+  if (id && !id.startsWith('temp-')) {
+    // Update existing Firestore document
+    const docRef = doc(db, QUIZZES_COL, id);
+    await updateDoc(docRef, data);
     return id;
   } else {
-    const docRef = await addDoc(collection(db, QUIZZES_COL), quizData);
+    // Add new document
+    const docRef = await addDoc(collection(db, QUIZZES_COL), data);
     return docRef.id;
   }
 };
