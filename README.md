@@ -15,3 +15,16 @@ Sebuah platform pendukung pembelajaran yang memungkinkan Guru untuk mengelola ku
 - Shadcn UI
 - Lucide React Icons
 - Recharts for Dashboard
+- Firebase Firestore (Cloud Database)
+
+## Setup Environment Variables:
+Buat file `.env.local` di root direktori dan masukkan kunci Firebase Anda:
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSy...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=brainquest-1fd17.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=brainquest-1fd17
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=brainquest-1fd17.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=94395132879
+NEXT_PUBLIC_FIREBASE_APP_ID=1:94395132879:web:9a1ae56c370fd568d7c0ba
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-LSPY9SGVW2
+```
