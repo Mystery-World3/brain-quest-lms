@@ -25,9 +25,10 @@ export default function LandingPage() {
     const loadData = async () => {
       try {
         const classes = await getClasses();
+        // Hanya tampilkan kelas yang aktif
         setAvailableClasses(classes.filter(c => c.active));
       } catch (error) {
-        console.error("Failed to load classes from Firestore:", error);
+        console.error("Gagal memuat kelas dari database:", error);
       } finally {
         setLoading(false);
       }
@@ -93,7 +94,7 @@ export default function LandingPage() {
                         ))}
                         {availableClasses.length === 0 && (
                           <div className="p-4 text-center text-muted-foreground font-bold">
-                            Belum ada kelas aktif.
+                            Belum ada kelas aktif di database.
                           </div>
                         )}
                       </SelectContent>

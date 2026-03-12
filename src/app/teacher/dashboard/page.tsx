@@ -13,18 +13,23 @@ export default function TeacherDashboard() {
   const [scores, setScores] = useState<any[]>([]);
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load static once
     const loadMaster = async () => {
-      const cls = await getClasses();
-      const qz = await getQuizzes();
-      setClasses(cls);
-      setQuizzes(qz);
+      try {
+        const [cls, qz] = await Promise.all([getClasses(), getQuizzes()]);
+        setClasses(cls);
+        setQuizzes(qz);
+      } catch (err) {
+        console.error("Dashboard master load failed:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     loadMaster();
 
-    // Listen to scores real-time!
+    // Listener Real-time!
     const unsubscribe = listenToScores((data) => {
       setScores(data);
     });
@@ -32,7 +37,6 @@ export default function TeacherDashboard() {
     return () => unsubscribe();
   }, []);
 
-  // Calculate dynamic stats
   const activeClassesCount = classes.filter(c => c.active).length;
   const activeQuizzesCount = quizzes.length;
   const totalStudentsFinished = scores.length;
@@ -42,41 +46,36 @@ export default function TeacherDashboard() {
 
   const stats = [
     { label: 'Kelas Aktif', value: activeClassesCount, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: 'Kuis Tersedia', value: activeQuizzesCount, icon: BookOpen, color: 'text-green-600', bg: 'bg-green-100' },
+    { label: 'Kuis Cloud', value: activeQuizzesCount, icon: BookOpen, color: 'text-green-600', bg: 'bg-green-100' },
     { label: 'Siswa Selesai', value: totalStudentsFinished, icon: CheckCircle, color: 'text-purple-600', bg: 'bg-purple-100' },
     { label: 'Rata-rata Skor', value: `${averageScore}%`, icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-100' },
   ];
 
-  // Prepare chart data: Average score per class
   const chartData = classes.map(cls => {
     const classScores = scores.filter(s => s.classId === cls.id);
     const avg = classScores.length > 0 
       ? Math.round(classScores.reduce((acc, s) => acc + s.score, 0) / classScores.length)
       : 0;
     return { name: cls.name.replace('Kelas ', ''), score: avg };
-  }).filter(d => d.score > 0 || quizzes.some(q => q.classId === classes.find(c => c.name?.includes(d.name))?.id));
+  }).filter(d => d.score > 0 || classes.length <= 5);
 
   const finalChartData = chartData.length > 0 ? chartData : [
     { name: '7-A', score: 0 },
     { name: '7-B', score: 0 },
-    { name: '8-A', score: 0 },
   ];
 
-  // Recent Activities
-  const recentActivities = [...scores]
-    .slice(0, 5)
-    .map(s => ({
-      user: s.name,
-      action: `menyelesaikan kuis "${s.quiz}"`,
-      time: s.date || 'Baru saja'
-    }));
+  const recentActivities = scores.slice(0, 8).map(s => ({
+    user: s.name,
+    action: `menyelesaikan kuis "${s.quiz}"`,
+    time: s.timestamp ? new Date(s.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Baru saja'
+  }));
 
   return (
     <div className="space-y-6 md:space-y-10">
       <div className="flex justify-between items-end px-1">
         <div>
-          <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground tracking-tighter">Dashboard</h1>
-          <p className="text-sm md:text-lg font-bold text-muted-foreground mt-1">Pantau perkembangan belajar siswa secara real-time.</p>
+          <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground tracking-tighter">Dashboard Real-time</h1>
+          <p className="text-sm md:text-lg font-bold text-muted-foreground mt-1">Data tersinkron otomatis antar perangkat via Cloud.</p>
         </div>
       </div>
 
@@ -107,35 +106,13 @@ export default function TeacherDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={finalChartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  className="font-black text-[10px] md:text-xs" 
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  className="font-black text-[10px] md:text-xs"
-                />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} className="font-black text-[10px] md:text-xs" />
+                <YAxis axisLine={false} tickLine={false} className="font-black text-[10px] md:text-xs" />
                 <Tooltip 
-                  contentStyle={{ 
-                    borderRadius: '20px', 
-                    border: 'none', 
-                    boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
-                    fontWeight: 'bold',
-                    padding: '12px 20px',
-                    fontSize: '12px'
-                  }}
+                  contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
                   cursor={{ fill: 'hsl(var(--primary) / 0.05)', radius: 10 }}
                 />
-                <Bar 
-                  dataKey="score" 
-                  fill="hsl(var(--primary))" 
-                  radius={[12, 12, 0, 0]} 
-                  barSize={40} 
-                  className="drop-shadow-xl"
-                />
+                <Bar dataKey="score" fill="hsl(var(--primary))" radius={[12, 12, 0, 0]} barSize={40} className="drop-shadow-xl" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -166,7 +143,7 @@ export default function TeacherDashboard() {
               )) : (
                 <div className="text-center py-12 md:py-20">
                    <Users className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground/20 mx-auto mb-4" />
-                   <p className="font-bold text-muted-foreground text-sm md:text-base">Belum ada aktivitas</p>
+                   <p className="font-bold text-muted-foreground text-sm md:text-base">Belum ada aktivitas masuk.</p>
                 </div>
               )}
             </div>

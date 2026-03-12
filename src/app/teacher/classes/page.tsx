@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { classes as initialClasses } from '@/lib/mock-data';
+import { getClasses, saveClass, deleteClass } from '@/services/database';
 import { Class } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -24,35 +24,36 @@ export default function ClassManagement() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [classToDelete, setClassToDelete] = useState<string | null>(null);
   const [editingClass, setEditingClass] = useState<Partial<Class> | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem('app_classes');
-    if (saved) {
-      setClasses(JSON.parse(saved));
-    } else {
-      setClasses(initialClasses);
-      localStorage.setItem('app_classes', JSON.stringify(initialClasses));
-    }
+    loadClasses();
   }, []);
 
-  const saveClasses = (newClasses: Class[]) => {
-    setClasses(newClasses);
-    localStorage.setItem('app_classes', JSON.stringify(newClasses));
+  const loadClasses = async () => {
+    setLoading(true);
+    try {
+      const data = await getClasses();
+      setClasses(data);
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Gagal Memuat Data', description: 'Pastikan koneksi internet stabil.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredClasses = classes.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const toggleStatus = (id: string) => {
-    const updated = classes.map(c => 
-      c.id === id ? { ...c, active: !c.active } : c
-    );
-    saveClasses(updated);
-    toast({ 
-      title: "Status Diperbarui", 
-      description: "Status kelas telah berhasil diubah." 
-    });
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      await saveClass({ id, active: !currentStatus });
+      loadClasses();
+      toast({ title: "Status Diperbarui", description: "Status kelas telah berhasil diubah di database." });
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Gagal Memperbarui', description: 'Gagal menghubungi database.' });
+    }
   };
 
   const handleDeleteRequest = (id: string) => {
@@ -60,18 +61,21 @@ export default function ClassManagement() {
     setIsConfirmOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (classToDelete) {
-      const updated = classes.filter(c => c.id !== classToDelete);
-      saveClasses(updated);
-      toast({ title: "Kelas Dihapus", description: "Data kelas telah dihapus secara permanen." });
+      try {
+        await deleteClass(classToDelete);
+        loadClasses();
+        toast({ title: "Kelas Dihapus", description: "Data kelas telah dihapus secara permanen dari database." });
+      } catch (err) {
+        toast({ variant: 'destructive', title: 'Gagal Menghapus', description: 'Data kelas tidak dapat dihapus.' });
+      }
     }
     setIsConfirmOpen(false);
   };
 
   const openAddDialog = () => {
     setEditingClass({
-      id: `class-${Date.now()}`,
       name: '',
       active: true
     });
@@ -83,24 +87,20 @@ export default function ClassManagement() {
     setIsDialogOpen(true);
   };
 
-  const handleSaveClass = () => {
+  const handleSaveClass = async () => {
     if (!editingClass?.name) {
       toast({ variant: "destructive", title: "Data Belum Lengkap", description: "Mohon isi nama kelas." });
       return;
     }
 
-    const updatedClasses = [...classes];
-    const index = updatedClasses.findIndex(c => c.id === editingClass.id);
-    
-    if (index >= 0) {
-      updatedClasses[index] = editingClass as Class;
-    } else {
-      updatedClasses.push(editingClass as Class);
+    try {
+      await saveClass(editingClass);
+      loadClasses();
+      setIsDialogOpen(false);
+      toast({ title: "Berhasil Disimpan", description: `Kelas "${editingClass.name}" telah diperbarui di database.` });
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: 'Terjadi kesalahan saat menyimpan ke database.' });
     }
-
-    saveClasses(updatedClasses);
-    setIsDialogOpen(false);
-    toast({ title: "Berhasil Disimpan", description: `Kelas "${editingClass.name}" telah diperbarui.` });
   };
 
   return (
@@ -108,7 +108,7 @@ export default function ClassManagement() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
           <h1 className="text-4xl font-headline font-black text-foreground tracking-tighter">Manajemen Kelas</h1>
-          <p className="text-lg font-bold text-muted-foreground mt-1">Kelola daftar kelas dan kontrol akses pengerjaan soal.</p>
+          <p className="text-lg font-bold text-muted-foreground mt-1">Kelola daftar kelas dan kontrol akses kuis.</p>
         </div>
         
         <Button onClick={openAddDialog} className="h-14 px-8 font-black text-lg rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all">
@@ -138,7 +138,9 @@ export default function ClassManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredClasses.map((cls) => (
+              {loading ? (
+                <TableRow><TableCell colSpan={3} className="text-center py-20 font-bold animate-pulse">Memuat data dari database...</TableCell></TableRow>
+              ) : filteredClasses.map((cls) => (
                 <TableRow key={cls.id} className="hover:bg-primary/5 transition-colors group border-b">
                   <TableCell className="pl-10 py-6">
                     <div className="flex items-center gap-4">
@@ -155,7 +157,7 @@ export default function ClassManagement() {
                     <div className="flex flex-col items-center gap-2">
                        <Switch 
                         checked={cls.active} 
-                        onCheckedChange={() => toggleStatus(cls.id)}
+                        onCheckedChange={() => handleToggleStatus(cls.id, cls.active)}
                       />
                       <Badge className={cn(
                         "border-none py-1 px-3 rounded-lg font-black text-[10px] tracking-widest",
@@ -175,7 +177,7 @@ export default function ClassManagement() {
               ))}
             </TableBody>
           </Table>
-          {filteredClasses.length === 0 && (
+          {!loading && filteredClasses.length === 0 && (
             <div className="p-24 text-center">
               <div className="bg-muted/20 inline-block p-8 rounded-full mb-6">
                 <School className="w-16 h-16 text-muted-foreground opacity-20" />
@@ -192,9 +194,9 @@ export default function ClassManagement() {
           <div className="bg-primary p-8 text-white">
             <DialogHeader>
               <DialogTitle className="text-3xl font-headline font-black text-white">
-                {editingClass?.id?.includes('class-') ? 'Edit Kelas' : 'Tambah Kelas Baru'}
+                {editingClass?.id ? 'Edit Kelas' : 'Tambah Kelas Baru'}
               </DialogTitle>
-              <DialogDescription className="text-white/80 font-bold text-lg">Masukkan identitas kelas di bawah ini.</DialogDescription>
+              <DialogDescription className="text-white/80 font-bold text-lg">Data akan langsung tersinkron ke murid.</DialogDescription>
             </DialogHeader>
           </div>
           <div className="p-8 space-y-6">
@@ -221,7 +223,7 @@ export default function ClassManagement() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl font-black text-red-600">Hapus Kelas?</AlertDialogTitle>
             <AlertDialogDescription className="text-lg font-bold">
-              Tindakan ini tidak dapat dibatalkan. Seluruh data kuis dan nilai siswa yang terkait dengan kelas ini akan ikut terhapus.
+              Data akan dihapus permanen dari Cloud. Murid tidak akan bisa mengakses kelas ini lagi.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-3 mt-4">
