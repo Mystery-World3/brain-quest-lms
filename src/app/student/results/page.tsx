@@ -199,7 +199,7 @@ export default function ResultsPage() {
                       <div className="mt-4 bg-muted/30 p-8 rounded-[2rem] border-2 border-dashed border-muted-foreground/20">
                         <div className="flex items-center gap-3 mb-4 text-primary">
                           <BookOpen size={20} className="animate-pulse" />
-                          <span className="text-xs font-black uppercase tracking-widest">Cara Pengerjaan</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest">Cara Pengerjaan</span>
                         </div>
                         <p className="text-lg font-medium leading-relaxed italic text-foreground/80">
                           {q.explanation}
