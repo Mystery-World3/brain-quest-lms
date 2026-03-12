@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, Save, Upload, Info, Check, Sigma, Type, List, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Save, Upload, Info, Check, Sigma, Type, List, X, BookOpen } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -86,7 +86,7 @@ export default function QuizManagement() {
       id: `quiz-${Date.now()}`,
       title: '',
       classId: '',
-      questions: [{ id: 'q1', type: 'multiple-choice', text: '', options: ['', '', '', ''], correctAnswer: 0 }]
+      questions: [{ id: 'q1', type: 'multiple-choice', text: '', options: ['', '', '', ''], correctAnswer: 0, explanation: '' }]
     });
     setIsDialogOpen(true);
   };
@@ -126,7 +126,8 @@ export default function QuizManagement() {
           type: 'multiple-choice',
           text: '',
           options: ['', '', '', ''],
-          correctAnswer: 0
+          correctAnswer: 0,
+          explanation: ''
         });
       }
       setEditingQuiz({ ...editingQuiz, questions: newQuestions });
@@ -162,6 +163,8 @@ export default function QuizManagement() {
 
       if (field === 'text') {
         q.text = (q.text || "") + symbol;
+      } else if (field === 'explanation') {
+        q.explanation = (q.explanation || "") + symbol;
       } else if (field === 'option' && typeof optionIdx === 'number') {
         const newOptions = [...q.options];
         newOptions[optionIdx] = (newOptions[optionIdx] || "") + symbol;
@@ -190,6 +193,7 @@ export default function QuizManagement() {
           id: `q-bulk-${Date.now()}-${i}`,
           type: q.type || 'multiple-choice',
           text: q.text || '',
+          explanation: q.explanation || '',
           options: q.options || (q.type === 'short-answer' ? [] : ['', '', '', '']),
           correctAnswer: q.correctAnswer ?? (q.type === 'short-answer' ? '' : 0)
         }));
@@ -450,6 +454,21 @@ export default function QuizManagement() {
                         </div>
                       )}
                     </div>
+
+                    {/* PEMBAHASAN / CARA PENGERJAAN */}
+                    <div className="space-y-4 pt-4 border-t border-white/5">
+                      <div className="flex items-center gap-2 text-white/40">
+                         <BookOpen size={14} className="text-primary" />
+                         <span className="text-[10px] font-black uppercase tracking-widest">Pembahasan / Cara Pengerjaan (Opsional)</span>
+                      </div>
+                      <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'explanation', s)} />
+                      <Textarea 
+                        placeholder="Tuliskan langkah-langkah penyelesaian agar siswa paham..." 
+                        value={q.explanation || ''}
+                        onChange={(e) => updateQuestion(qIdx, 'explanation', e.target.value)}
+                        className="min-h-[100px] rounded-2xl bg-white/5 border-white/10 font-medium text-white placeholder:text-white/20 px-6 focus:ring-primary/40 focus:border-primary" 
+                      />
+                    </div>
                   </div>
                 ))}
 
@@ -519,12 +538,14 @@ export default function QuizManagement() {
   {
     "type": "multiple-choice",
     "text": "1 + 1 = ?",
+    "explanation": "Cukup jumlahkan angka satu dengan satu.",
     "options": ["1", "2", "3", "4"],
     "correctAnswer": 1
   },
   {
     "type": "short-answer",
     "text": "Siapa penemu lampu?",
+    "explanation": "Thomas Edison mematenkan lampu pijar pada tahun 1879.",
     "correctAnswer": "Thomas Edison"
   }
 ]`}

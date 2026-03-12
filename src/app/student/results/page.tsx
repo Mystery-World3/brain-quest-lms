@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -6,7 +7,7 @@ import { initialQuizzes, classes } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, Trophy, Home, Award, ArrowRight, User, Medal, Sparkles } from 'lucide-react';
+import { CheckCircle2, XCircle, Trophy, Home, Award, ArrowRight, User, Medal, Sparkles, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
@@ -23,6 +24,7 @@ export default function ResultsPage() {
   const [quiz, setQuiz] = useState<any>(null);
   const [showScoreboard, setShowScoreboard] = useState(false);
   const [studentName, setStudentName] = useState('');
+  const [classScores, setClassScores] = useState<any[]>([]);
 
   useEffect(() => {
     const lastResult = localStorage.getItem('last_result');
@@ -40,6 +42,21 @@ export default function ResultsPage() {
     const savedQuizzesRaw = localStorage.getItem('app_quizzes');
     const quizzesToSearch = savedQuizzesRaw ? JSON.parse(savedQuizzesRaw) : initialQuizzes;
     setQuiz(quizzesToSearch.find((q: any) => q.id === parsed.quizId) || quizzesToSearch[0]);
+
+    // Fetch scores for leaderboard from REAL system data
+    const savedScoresRaw = localStorage.getItem('app_scores');
+    const allScores = savedScoresRaw ? JSON.parse(savedScoresRaw) : [];
+    
+    // Filter by current quiz and class to make it relevant
+    const relevantScores = allScores
+      .filter((s: any) => s.quiz === (quizzesToSearch.find((q: any) => q.id === parsed.quizId)?.title || parsed.quizTitle) && s.classId === parsed.classId)
+      .map((s: any) => ({
+        ...s,
+        isCurrent: s.name === name // Simplistic identification
+      }))
+      .sort((a: any, b: any) => b.score - a.score);
+
+    setClassScores(relevantScores);
   }, [router]);
 
   if (!result || !quiz) return (
@@ -49,15 +66,7 @@ export default function ResultsPage() {
   );
 
   const isHighPerformance = result.score >= 80;
-
   const currentClassName = classes.find(c => c.id === result.classId)?.name || "Kelas";
-  const classScores = [
-    { name: studentName, score: result.score, isCurrent: true },
-    { name: 'Rahmat Hidayat', score: 95, isCurrent: false },
-    { name: 'Siti Aminah', score: 85, isCurrent: false },
-    { name: 'Budi Utomo', score: 75, isCurrent: false },
-    { name: 'Dewi Lestari', score: 60, isCurrent: false },
-  ].sort((a, b) => b.score - a.score);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center">
@@ -131,57 +140,72 @@ export default function ResultsPage() {
                   "border-4 rounded-[2.5rem] shadow-xl transition-all duration-300 student-card-hover overflow-hidden",
                   isCorrect ? "border-green-500/10 hover:border-green-500/50" : "border-red-500/10 hover:border-red-500/50"
                 )}>
-                  <div className="p-8 flex flex-col md:flex-row gap-8">
-                    <div className={cn(
-                      "w-16 h-16 rounded-2xl shrink-0 flex items-center justify-center font-black text-2xl shadow-inner",
-                      isCorrect 
-                        ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400" 
-                        : "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400"
-                    )}>
-                      {i + 1}
-                    </div>
-                    <div className="flex-1 space-y-6">
-                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                        <h3 className="text-2xl font-black leading-tight text-foreground">
-                          {q.text}
-                        </h3>
-                        {isCorrect ? (
-                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 border-none shrink-0 py-2 px-5 rounded-2xl font-black text-sm tracking-widest shadow-sm">
-                            <CheckCircle2 size={18} className="mr-2" /> BENAR
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 border-none shrink-0 py-2 px-5 rounded-2xl font-black text-sm tracking-widest shadow-sm">
-                            <XCircle size={18} className="mr-2" /> SALAH
-                          </Badge>
-                        )}
+                  <div className="p-8 flex flex-col gap-8">
+                    <div className="flex flex-col md:flex-row gap-8">
+                      <div className={cn(
+                        "w-16 h-16 rounded-2xl shrink-0 flex items-center justify-center font-black text-2xl shadow-inner",
+                        isCorrect 
+                          ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400" 
+                          : "bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400"
+                      )}>
+                        {i + 1}
                       </div>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className={cn(
-                          "p-6 rounded-3xl border-2 flex flex-col gap-2 shadow-inner",
-                          isCorrect 
-                            ? "bg-green-50/50 border-green-200 dark:bg-green-950/20 dark:border-green-900" 
-                            : "bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-900"
-                        )}>
-                          <span className="text-xs font-black uppercase tracking-[0.2em] opacity-50">Jawabanmu</span>
-                          <span className="text-lg font-black">
-                            {q.type === 'multiple-choice' 
-                              ? (q.options[result.answers[i]] || 'Kosong')
-                              : (result.answers[i] === -1 ? 'Kosong' : result.answers[i])
-                            }
-                          </span>
+                      <div className="flex-1 space-y-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                          <h3 className="text-2xl font-black leading-tight text-foreground">
+                            {q.text}
+                          </h3>
+                          {isCorrect ? (
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 border-none shrink-0 py-2 px-5 rounded-2xl font-black text-sm tracking-widest shadow-sm">
+                              <CheckCircle2 size={18} className="mr-2" /> BENAR
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 border-none shrink-0 py-2 px-5 rounded-2xl font-black text-sm tracking-widest shadow-sm">
+                              <XCircle size={18} className="mr-2" /> SALAH
+                            </Badge>
+                          )}
                         </div>
                         
-                        {!isCorrect && (
-                          <div className="p-6 rounded-3xl border-4 border-green-500/20 bg-green-50/30 dark:bg-green-950/10 flex flex-col gap-2 shadow-inner">
-                            <span className="text-xs font-black uppercase tracking-[0.2em] text-green-600">Kunci Jawaban</span>
-                            <span className="text-lg font-black text-green-700 dark:text-green-400">
-                              {q.type === 'multiple-choice' ? q.options[q.correctAnswer] : q.correctAnswer}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className={cn(
+                            "p-6 rounded-3xl border-2 flex flex-col gap-2 shadow-inner",
+                            isCorrect 
+                              ? "bg-green-50/50 border-green-200 dark:bg-green-950/20 dark:border-green-900" 
+                              : "bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-900"
+                          )}>
+                            <span className="text-xs font-black uppercase tracking-[0.2em] opacity-50">Jawabanmu</span>
+                            <span className="text-lg font-black">
+                              {q.type === 'multiple-choice' 
+                                ? (q.options[result.answers[i]] || 'Kosong')
+                                : (result.answers[i] === -1 ? 'Kosong' : result.answers[i])
+                              }
                             </span>
                           </div>
-                        )}
+                          
+                          {!isCorrect && (
+                            <div className="p-6 rounded-3xl border-4 border-green-500/20 bg-green-50/30 dark:bg-green-950/10 flex flex-col gap-2 shadow-inner">
+                              <span className="text-xs font-black uppercase tracking-[0.2em] text-green-600">Kunci Jawaban</span>
+                              <span className="text-lg font-black text-green-700 dark:text-green-400">
+                                {q.type === 'multiple-choice' ? q.options[q.correctAnswer] : q.correctAnswer}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
+
+                    {/* PEMBAHASAN / CARA PENGERJAAN */}
+                    {q.explanation && (
+                      <div className="mt-4 bg-muted/30 p-8 rounded-[2rem] border-2 border-dashed border-muted-foreground/20">
+                        <div className="flex items-center gap-3 mb-4 text-primary">
+                          <BookOpen size={20} className="animate-pulse" />
+                          <span className="text-xs font-black uppercase tracking-widest">Cara Pengerjaan</span>
+                        </div>
+                        <p className="text-lg font-medium leading-relaxed italic text-foreground/80">
+                          {q.explanation}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </Card>
               );
@@ -221,7 +245,7 @@ export default function ResultsPage() {
             </div>
           </div>
           <div className="p-8 space-y-4 max-h-[50vh] overflow-auto bg-background/50 backdrop-blur-sm">
-            {classScores.map((score, idx) => (
+            {classScores.length > 0 ? classScores.map((score, idx) => (
               <div 
                 key={idx}
                 className={cn(
@@ -252,7 +276,11 @@ export default function ResultsPage() {
                   <span className="text-xs font-black text-muted-foreground block uppercase tracking-tighter">Skor</span>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-12 text-muted-foreground font-bold">
+                Belum ada data skor untuk kelas ini.
+              </div>
+            )}
           </div>
           <div className="p-8 bg-muted/20 border-t flex justify-center">
             <Button onClick={() => setShowScoreboard(false)} className="h-14 px-12 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all">

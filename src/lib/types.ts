@@ -11,6 +11,7 @@ export type Question = {
   id: string;
   type: QuestionType;
   text: string;
+  explanation?: string; // Penjelasan cara pengerjaan
   options: string[]; // Digunakan untuk multiple-choice
   correctAnswer: string | number; // Index untuk multiple-choice, string untuk short-answer
 };

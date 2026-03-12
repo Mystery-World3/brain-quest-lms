@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -101,10 +102,11 @@ export default function QuizPage() {
       timestamp: new Date().toISOString()
     };
 
+    // Save Score to Global List (Dashboard Guru)
     const savedScoresRaw = localStorage.getItem('app_scores');
     const allScores = savedScoresRaw ? JSON.parse(savedScoresRaw) : [];
     
-    allScores.push({
+    const newScoreEntry = {
       id: `res-${Date.now()}`,
       name: studentName,
       classId: classId as string,
@@ -112,9 +114,9 @@ export default function QuizPage() {
       quiz: quiz.title,
       score: finalScore,
       date: new Date().toISOString().split('T')[0]
-    });
-    
-    localStorage.setItem('app_scores', JSON.stringify(allScores));
+    };
+
+    localStorage.setItem('app_scores', JSON.stringify([...allScores, newScoreEntry]));
     localStorage.setItem('last_result', JSON.stringify(result));
     router.push('/student/results');
   };
