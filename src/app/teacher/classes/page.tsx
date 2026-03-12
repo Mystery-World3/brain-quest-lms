@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, Search, School, Save, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, School, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -26,6 +26,7 @@ export default function ClassManagement() {
   const [classToDelete, setClassToDelete] = useState<string | null>(null);
   const [editingClass, setEditingClass] = useState<Partial<Class> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadClasses();
@@ -51,7 +52,7 @@ export default function ClassManagement() {
     try {
       await saveClass({ id, active: !currentStatus });
       await loadClasses();
-      toast({ title: "Status Diperbarui", description: "Status kelas telah berhasil diubah di database." });
+      toast({ title: "Status Diperbarui", description: "Status kelas telah berhasil diubah." });
     } catch (err) {
       toast({ variant: 'destructive', title: 'Gagal Memperbarui', description: 'Gagal menghubungi database.' });
     }
@@ -67,7 +68,7 @@ export default function ClassManagement() {
       try {
         await deleteClass(classToDelete);
         await loadClasses();
-        toast({ title: "Kelas Dihapus", description: "Data kelas telah dihapus secara permanen dari database." });
+        toast({ title: "Kelas Dihapus", description: "Data kelas telah dihapus secara permanen." });
       } catch (err) {
         toast({ variant: 'destructive', title: 'Gagal Menghapus', description: 'Data kelas tidak dapat dihapus.' });
       }
@@ -94,14 +95,17 @@ export default function ClassManagement() {
       return;
     }
 
+    setIsSaving(true);
     try {
       await saveClass(editingClass);
       await loadClasses();
       setIsDialogOpen(false);
-      toast({ title: "Berhasil Disimpan", description: `Kelas "${editingClass.name}" telah disimpan ke Cloud.` });
+      toast({ title: "Berhasil Disimpan", description: `Kelas "${editingClass.name}" telah disimpan.` });
     } catch (err) {
       console.error("Save error:", err);
-      toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: 'Terjadi kesalahan saat menyimpan ke database.' });
+      toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: 'Terjadi kesalahan saat menyimpan.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -142,7 +146,7 @@ export default function ClassManagement() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={3} className="text-center py-20 font-bold animate-pulse">Memuat data dari database...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={3} className="text-center py-20 font-bold animate-pulse">Memuat data...</TableCell></TableRow>
                 ) : filteredClasses.map((cls) => (
                   <TableRow key={cls.id} className="hover:bg-primary/5 transition-colors group border-b">
                     <TableCell className="pl-8 py-6">
@@ -180,19 +184,10 @@ export default function ClassManagement() {
                 ))}
               </TableBody>
             </Table>
-            {!loading && filteredClasses.length === 0 && (
-              <div className="p-16 md:p-24 text-center">
-                <div className="bg-muted/20 inline-block p-6 md:p-8 rounded-full mb-6">
-                  <School className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground opacity-20" />
-                </div>
-                <p className="text-xl md:text-2xl font-black text-muted-foreground">Tidak ada kelas ditemukan.</p>
-              </div>
-            )}
           </ScrollArea>
         </CardContent>
       </Card>
 
-      {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md w-[95vw] rounded-[2rem] md:rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-background">
           <div className="bg-primary p-6 md:p-8 text-white">
@@ -200,7 +195,7 @@ export default function ClassManagement() {
               <DialogTitle className="text-2xl md:text-3xl font-headline font-black text-white">
                 {editingClass?.id ? 'Edit Kelas' : 'Tambah Kelas Baru'}
               </DialogTitle>
-              <DialogDescription className="text-white/80 font-bold text-sm md:text-lg">Data akan langsung tersinkron ke murid.</DialogDescription>
+              <DialogDescription className="text-white/80 font-bold text-sm md:text-lg">Data akan langsung tersinkron ke semua perangkat.</DialogDescription>
             </DialogHeader>
           </div>
           <div className="p-6 md:p-8 space-y-6">
@@ -215,19 +210,20 @@ export default function ClassManagement() {
             </div>
           </div>
           <DialogFooter className="p-6 md:p-8 bg-muted/20 border-t flex flex-row gap-3">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 h-12 md:h-14 rounded-xl font-black text-foreground">Batal</Button>
-            <Button onClick={handleSaveClass} className="flex-1 h-12 md:h-14 rounded-xl font-black shadow-lg">Simpan</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSaving} className="flex-1 h-12 md:h-14 rounded-xl font-black text-foreground">Batal</Button>
+            <Button onClick={handleSaveClass} disabled={isSaving} className="flex-1 h-12 md:h-14 rounded-xl font-black shadow-lg">
+              {isSaving ? <Loader2 className="animate-spin" /> : 'Simpan'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <AlertDialogContent className="rounded-[2rem] w-[90vw] max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl md:text-2xl font-black text-red-600">Hapus Kelas?</AlertDialogTitle>
             <AlertDialogDescription className="text-base md:text-lg font-bold">
-              Data akan dihapus permanen dari Cloud. Murid tidak akan bisa mengakses kelas ini lagi.
+              Data akan dihapus permanen. Murid tidak akan bisa mengakses kelas ini lagi.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-3 mt-4 flex-row">

@@ -10,13 +10,10 @@ import {
   query, 
   where, 
   orderBy, 
-  onSnapshot,
-  setDoc,
-  getDoc
+  onSnapshot
 } from 'firebase/firestore';
-import { Class, Quiz, Question } from '@/lib/types';
+import { Class, Quiz, StudentResult } from '@/lib/types';
 
-// Collections Names
 const CLASSES_COL = 'classes';
 const QUIZZES_COL = 'quizzes';
 const SCORES_COL = 'scores';
@@ -31,14 +28,18 @@ export const getClasses = async () => {
 
 export const saveClass = async (classData: Partial<Class>) => {
   const { id, ...data } = classData;
+  // Pastikan data memiliki field 'active' default jika baru
+  const finalData = {
+    name: data.name || '',
+    active: data.active ?? true
+  };
+
   if (id && !id.startsWith('temp-')) {
-    // Update existing Firestore document
     const docRef = doc(db, CLASSES_COL, id);
-    await updateDoc(docRef, data);
+    await updateDoc(docRef, finalData);
     return id;
   } else {
-    // Add new document
-    const docRef = await addDoc(collection(db, CLASSES_COL), data);
+    const docRef = await addDoc(collection(db, CLASSES_COL), finalData);
     return docRef.id;
   }
 };
@@ -58,12 +59,10 @@ export const getQuizzes = async () => {
 export const saveQuiz = async (quizData: Partial<Quiz>) => {
   const { id, ...data } = quizData;
   if (id && !id.startsWith('temp-')) {
-    // Update existing Firestore document
     const docRef = doc(db, QUIZZES_COL, id);
     await updateDoc(docRef, data);
     return id;
   } else {
-    // Add new document
     const docRef = await addDoc(collection(db, QUIZZES_COL), data);
     return docRef.id;
   }
@@ -95,10 +94,10 @@ export const deleteScore = async (id: string) => {
 };
 
 export const updateScore = async (id: string, data: any) => {
-  await updateDoc(doc(db, SCORES_COL, id), data);
+  const { id: _, ...updateData } = data;
+  await updateDoc(doc(db, SCORES_COL, id), updateData);
 };
 
-// Real-time listener for scores (Perfect for Dashboard)
 export const listenToScores = (callback: (scores: any[]) => void) => {
   const q = query(collection(db, SCORES_COL), orderBy('timestamp', 'desc'));
   return onSnapshot(q, (querySnapshot) => {
@@ -107,7 +106,6 @@ export const listenToScores = (callback: (scores: any[]) => void) => {
   });
 };
 
-// Real-time listener for leaderboard
 export const listenToLeaderboard = (quizId: string, classId: string, callback: (scores: any[]) => void) => {
   const q = query(
     collection(db, SCORES_COL), 
