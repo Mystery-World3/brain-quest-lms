@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { getQuizzes, saveQuiz, deleteQuiz, getClasses } from '@/services/database';
+import { listenToQuizzes, saveQuiz, deleteQuiz, getClasses, listenToClasses } from '@/services/database';
 import { Quiz, Question, Class, QuestionType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, Save, Upload, Info, Check, Sigma, Type, List, X, BookOpen, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Save, Upload, Check, Sigma, BookOpen, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -40,22 +40,21 @@ export default function QuizManagement() {
   const [uploadJson, setUploadJson] = useState('');
   
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const qData = await getQuizzes();
-      const cData = await getClasses();
-      setQuizzes(qData);
-      setClasses(cData);
-    } catch (err) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Gagal memuat data dari Cloud.' });
-    } finally {
+    // Listen to real-time updates for Quizzes and Classes
+    const unsubscribeQuizzes = listenToQuizzes((data) => {
+      setQuizzes(data);
       setLoading(false);
-    }
-  };
+    });
+
+    const unsubscribeClasses = listenToClasses((data) => {
+      setClasses(data);
+    });
+
+    return () => {
+      unsubscribeQuizzes();
+      unsubscribeClasses();
+    };
+  }, []);
 
   const filteredQuizzes = quizzes.filter(q => 
     q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -69,15 +68,11 @@ export default function QuizManagement() {
 
   const confirmDelete = async () => {
     if (quizToDelete) {
-      setLoading(true);
       try {
         await deleteQuiz(quizToDelete);
-        await loadData();
         toast({ title: "Kuis Dihapus", description: "Data kuis telah dihapus dari database." });
       } catch (err) {
         toast({ variant: 'destructive', title: 'Gagal Menghapus', description: 'Koneksi database bermasalah.' });
-      } finally {
-        setLoading(false);
       }
     }
     setIsConfirmOpen(false);
@@ -106,9 +101,8 @@ export default function QuizManagement() {
     setIsSaving(true);
     try {
       await saveQuiz(editingQuiz);
-      await loadData();
       setIsDialogOpen(false);
-      toast({ title: "Berhasil Disimpan", description: `Kuis "${editingQuiz.title}" tersimpan di Cloud.` });
+      toast({ title: "Berhasil Disimpan", description: `Kuis "${editingQuiz.title}" tersimpan di Cloud secara instan.` });
     } catch (err) {
       console.error("Error saving quiz:", err);
       toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: 'Terjadi kesalahan saat menghubungi database.' });
@@ -236,7 +230,7 @@ export default function QuizManagement() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
           <h1 className="text-3xl md:text-4xl font-headline font-black text-primary tracking-tighter">Manajemen Kuis</h1>
-          <p className="text-base md:text-lg font-bold text-muted-foreground mt-1">Simpan bank soal Anda secara aman di Cloud.</p>
+          <p className="text-base md:text-lg font-bold text-muted-foreground mt-1">Bank soal tersinkron otomatis antar semua perangkat.</p>
         </div>
         
         <div className="flex gap-3 w-full sm:w-auto">
@@ -270,14 +264,14 @@ export default function QuizManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading && !isSaving ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold animate-pulse">Menghubungkan ke Database Cloud...</TableCell></TableRow>
+                {loading ? (
+                  <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold animate-pulse text-primary">Menghubungkan ke Real-time Bank Soal...</TableCell></TableRow>
                 ) : filteredQuizzes.map((quiz) => (
                   <TableRow key={quiz.id} className="hover:bg-primary/5 transition-colors group border-b">
                     <TableCell className="font-black text-lg pl-8 py-6 text-foreground">{quiz.title}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="font-black py-1.5 px-4 rounded-xl border-none bg-accent/10 text-accent">
-                        {classes.find(c => c.id === quiz.classId)?.name || 'Kelas Terhapus'}
+                        {classes.find(c => c.id === quiz.classId)?.name || 'Memuat Kelas...'}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-bold text-muted-foreground">{quiz.questions.length} Soal</TableCell>
@@ -296,7 +290,7 @@ export default function QuizManagement() {
                 <div className="bg-muted/20 inline-block p-6 md:p-8 rounded-full mb-6">
                   <Search className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground opacity-20" />
                 </div>
-                <p className="text-xl md:text-2xl font-black text-muted-foreground">Bank soal kosong.</p>
+                <p className="text-xl md:text-2xl font-black text-muted-foreground">Bank soal belum ada data.</p>
               </div>
             )}
           </ScrollArea>
@@ -311,7 +305,7 @@ export default function QuizManagement() {
                 <DialogTitle className="text-xl md:text-3xl font-headline font-black text-white">
                   {editingQuiz?.id ? 'Edit Kuis' : 'Buat Kuis Cloud'}
                 </DialogTitle>
-                <DialogDescription className="text-white/40 font-bold text-xs md:text-sm">Data akan tersimpan secara terpusat.</DialogDescription>
+                <DialogDescription className="text-white/40 font-bold text-xs md:text-sm">Perubahan akan langsung terlihat oleh siswa.</DialogDescription>
               </div>
               <Button 
                 onClick={() => setIsUploadOpen(true)}

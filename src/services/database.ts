@@ -31,6 +31,16 @@ export const getClasses = async () => {
   }
 };
 
+export const listenToClasses = (callback: (classes: Class[]) => void) => {
+  const q = query(collection(db, CLASSES_COL), orderBy('name', 'asc'));
+  return onSnapshot(q, (querySnapshot) => {
+    const classes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
+    callback(classes);
+  }, (error) => {
+    console.error("Listen to classes error:", error);
+  });
+};
+
 export const saveClass = async (classData: Partial<Class>) => {
   const { id, ...data } = classData;
   const finalData = {
@@ -75,10 +85,19 @@ export const getQuizzes = async () => {
   }
 };
 
+export const listenToQuizzes = (callback: (quizzes: Quiz[]) => void) => {
+  const q = query(collection(db, QUIZZES_COL));
+  return onSnapshot(q, (querySnapshot) => {
+    const quizzes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
+    callback(quizzes);
+  }, (error) => {
+    console.error("Listen to quizzes error:", error);
+  });
+};
+
 export const saveQuiz = async (quizData: Partial<Quiz>) => {
   const { id, ...data } = quizData;
   
-  // Bersihkan data dari undefined untuk Firestore
   const cleanQuestions = (data.questions || []).map(q => ({
     id: q.id || `q-${Date.now()}-${Math.random()}`,
     type: q.type || 'multiple-choice',

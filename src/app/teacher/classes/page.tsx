@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { getClasses, saveClass, deleteClass } from '@/services/database';
+import { listenToClasses, saveClass, deleteClass } from '@/services/database';
 import { Class } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -29,20 +29,14 @@ export default function ClassManagement() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    loadClasses();
-  }, []);
-
-  const loadClasses = async () => {
-    setLoading(true);
-    try {
-      const data = await getClasses();
+    // Gunakan Real-time Listener agar data langsung muncul tanpa refresh
+    const unsubscribe = listenToClasses((data) => {
       setClasses(data);
-    } catch (err) {
-      toast({ variant: 'destructive', title: 'Gagal Memuat Data', description: 'Pastikan koneksi internet stabil.' });
-    } finally {
       setLoading(false);
-    }
-  };
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const filteredClasses = classes.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -51,8 +45,7 @@ export default function ClassManagement() {
   const handleToggleStatus = async (id: string, currentStatus: boolean) => {
     try {
       await saveClass({ id, active: !currentStatus });
-      await loadClasses();
-      toast({ title: "Status Diperbarui", description: "Status kelas telah berhasil diubah." });
+      toast({ title: "Status Diperbarui", description: "Status kelas telah berhasil diubah secara real-time." });
     } catch (err) {
       toast({ variant: 'destructive', title: 'Gagal Memperbarui', description: 'Gagal menghubungi database.' });
     }
@@ -65,15 +58,11 @@ export default function ClassManagement() {
 
   const confirmDelete = async () => {
     if (classToDelete) {
-      setLoading(true);
       try {
         await deleteClass(classToDelete);
-        await loadClasses();
         toast({ title: "Kelas Dihapus", description: "Data kelas telah dihapus secara permanen." });
       } catch (err) {
         toast({ variant: 'destructive', title: 'Gagal Menghapus', description: 'Data kelas tidak dapat dihapus.' });
-      } finally {
-        setLoading(false);
       }
     }
     setIsConfirmOpen(false);
@@ -101,12 +90,11 @@ export default function ClassManagement() {
     setIsSaving(true);
     try {
       await saveClass(editingClass);
-      await loadClasses();
       setIsDialogOpen(false);
-      toast({ title: "Berhasil Disimpan", description: `Kelas "${editingClass.name}" telah disimpan.` });
+      toast({ title: "Berhasil Disimpan", description: `Kelas "${editingClass.name}" telah disimpan di Cloud.` });
     } catch (err) {
       console.error("Save error:", err);
-      toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: 'Terjadi kesalahan saat menyimpan.' });
+      toast({ variant: 'destructive', title: 'Gagal Menyimpan', description: 'Terjadi kesalahan saat menghubungi server.' });
     } finally {
       setIsSaving(false);
     }
@@ -117,7 +105,7 @@ export default function ClassManagement() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
           <h1 className="text-3xl md:text-4xl font-headline font-black text-foreground tracking-tighter">Manajemen Kelas</h1>
-          <p className="text-sm md:text-lg font-bold text-muted-foreground mt-1">Kelola daftar kelas dan kontrol akses kuis.</p>
+          <p className="text-sm md:text-lg font-bold text-muted-foreground mt-1">Kelola daftar kelas secara instan & real-time.</p>
         </div>
         
         <Button onClick={openAddDialog} className="w-full sm:w-auto h-12 md:h-14 px-8 font-black text-lg rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all">
@@ -148,9 +136,9 @@ export default function ClassManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading && !isSaving ? (
-                  <TableRow><TableCell colSpan={3} className="text-center py-20 font-bold animate-pulse">Memuat data...</TableCell></TableRow>
-                ) : filteredClasses.map((cls) => (
+                {loading ? (
+                  <TableRow><TableCell colSpan={3} className="text-center py-20 font-bold animate-pulse text-primary">Menghubungkan ke Real-time Database...</TableCell></TableRow>
+                ) : filteredClasses.length > 0 ? filteredClasses.map((cls) => (
                   <TableRow key={cls.id} className="hover:bg-primary/5 transition-colors group border-b">
                     <TableCell className="pl-8 py-6">
                       <div className="flex items-center gap-4">
@@ -184,7 +172,13 @@ export default function ClassManagement() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-20 font-bold text-muted-foreground">
+                      Belum ada kelas yang ditambahkan.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </ScrollArea>
