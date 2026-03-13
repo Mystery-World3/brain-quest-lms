@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { getQuizzes, addScore } from '@/services/database';
+import { listenToQuizzes, addScore } from '@/services/database';
 import { Quiz } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, Send, Timer, Star, CheckCircle2, Type } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, Timer, Star, CheckCircle2, Type, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -24,32 +24,53 @@ export default function QuizPage() {
   const [studentName, setStudentName] = useState('');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const name = localStorage.getItem('student_name') || 'Siswa';
     setStudentName(name);
 
-    const loadQuiz = async () => {
-      try {
-        const quizzes = await getQuizzes();
-        const foundQuiz = quizzes.find(q => q.classId === classId) || quizzes[0];
+    // Gunakan listener real-time agar kuis selalu sinkron dengan bank soal terbaru di Cloud
+    const unsubscribe = listenToQuizzes((quizzes) => {
+      const foundQuiz = quizzes.find(q => q.classId === classId);
+      
+      if (foundQuiz) {
         setQuiz(foundQuiz);
-        setAnswers(new Array(foundQuiz.questions.length).fill(-1));
-      } catch (err) {
-        console.error("Error fetching quiz:", err);
-      } finally {
-        setLoading(false);
+        // Inisialisasi jawaban jika belum ada
+        setAnswers(prev => prev.length === 0 ? new Array(foundQuiz.questions.length).fill(-1) : prev);
+        setError(null);
+      } else {
+        setError("Kuis untuk kelas ini belum tersedia atau sudah dinonaktifkan.");
       }
-    };
-    loadQuiz();
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [classId]);
 
-  if (loading || !quiz) return (
+  if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="font-bold text-base md:text-lg">Memuat Kuis...</p>
+        <p className="font-black text-muted-foreground animate-pulse tracking-widest uppercase text-xs">Menghubungkan ke Cloud...</p>
       </div>
+    </div>
+  );
+
+  if (error || !quiz) return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <Card className="max-w-md w-full rounded-[2rem] border-none shadow-2xl overflow-hidden">
+        <div className="bg-destructive p-8 text-white text-center">
+          <AlertCircle size={48} className="mx-auto mb-4 animate-bounce" />
+          <h2 className="text-2xl font-black">Ups! Terjadi Masalah</h2>
+        </div>
+        <CardContent className="p-8 text-center space-y-6">
+          <p className="text-lg font-bold text-muted-foreground leading-relaxed">{error}</p>
+          <Button onClick={() => router.push('/')} className="w-full h-14 rounded-xl font-black text-lg">
+            Kembali ke Beranda
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 
@@ -104,8 +125,8 @@ export default function QuizPage() {
       quiz: quiz.title,
       quizId: quiz.id,
       score: finalScore,
-      answers, // Simpan jawaban untuk review nanti
-      date: new Date().toISOString().split('T')[0],
+      answers,
+      date: new Date().toLocaleDateString('id-ID'),
       timestamp: new Date().toISOString()
     };
 
@@ -115,7 +136,7 @@ export default function QuizPage() {
       router.push('/student/results');
     } catch (err) {
       console.error("Failed to save score:", err);
-      alert("Terjadi kesalahan saat menyimpan nilai. Silakan coba lagi.");
+      alert("Gagal mengirim nilai. Pastikan koneksi internet stabil.");
     }
   };
 

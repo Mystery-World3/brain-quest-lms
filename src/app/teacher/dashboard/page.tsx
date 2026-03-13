@@ -16,15 +16,15 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Gunakan listener untuk semua data agar dashboard benar-benar real-time
+    // Gunakan listener real-time untuk semua data utama
     const unsubscribeScores = listenToScores((data) => {
       setScores(data);
     });
 
     const unsubscribeClasses = listenToClasses((data) => {
       setClasses(data);
-      // Matikan loading setelah data master (kelas) pertama kali diterima
-      setLoading(false);
+      // Sinkronisasi status pemuatan
+      if (data.length >= 0) setLoading(false);
     });
 
     const unsubscribeQuizzes = listenToQuizzes((data) => {
@@ -42,7 +42,7 @@ export default function TeacherDashboard() {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="font-black text-muted-foreground animate-pulse">Sinkronisasi Cloud Dashboard...</p>
+        <p className="font-black text-muted-foreground animate-pulse tracking-widest uppercase text-xs">Sinkronisasi Cloud...</p>
       </div>
     );
   }
@@ -84,7 +84,7 @@ export default function TeacherDashboard() {
       <div className="flex justify-between items-end px-1">
         <div>
           <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground tracking-tighter">Dashboard Real-time</h1>
-          <p className="text-sm md:text-lg font-bold text-muted-foreground mt-1">Data tersinkron otomatis antar perangkat via Cloud.</p>
+          <p className="text-sm md:text-lg font-bold text-muted-foreground mt-1">Status kuis dan aktivitas siswa terpantau secara instan.</p>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export default function TeacherDashboard() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm md:text-base font-black text-foreground truncate">{item.user}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground font-bold leading-snug">{item.action}</p>
+                    <p className="text-xs md:sm text-muted-foreground font-bold leading-snug">{item.action}</p>
                     <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-1">{item.time}</p>
                   </div>
                 </div>
