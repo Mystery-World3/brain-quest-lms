@@ -10,7 +10,9 @@ import {
   query, 
   where, 
   orderBy, 
-  onSnapshot
+  onSnapshot,
+  serverTimestamp,
+  getDoc
 } from 'firebase/firestore';
 import { Class, Quiz } from '@/lib/types';
 
@@ -43,17 +45,28 @@ export const listenToClasses = (callback: (classes: Class[]) => void) => {
 
 export const saveClass = async (classData: Partial<Class>) => {
   const { id, ...data } = classData;
-  const finalData = {
-    name: data.name || '',
-    active: data.active ?? true
-  };
-
+  
   try {
     if (id && !id.startsWith('temp-')) {
       const docRef = doc(db, CLASSES_COL, id);
-      await updateDoc(docRef, finalData);
+      // Ambil data lama agar tidak menimpa field yang tidak dikirim (seperti nama saat toggle status)
+      const existingDoc = await getDoc(docRef);
+      const existingData = existingDoc.exists() ? existingDoc.data() : {};
+      
+      const finalUpdate = {
+        ...existingData,
+        ...data,
+        updatedAt: serverTimestamp()
+      };
+      
+      await updateDoc(docRef, finalUpdate);
       return id;
     } else {
+      const finalData = {
+        name: data.name || 'Tanpa Nama',
+        active: data.active ?? true,
+        createdAt: serverTimestamp()
+      };
       const docRef = await addDoc(collection(db, CLASSES_COL), finalData);
       return docRef.id;
     }
@@ -107,19 +120,23 @@ export const saveQuiz = async (quizData: Partial<Quiz>) => {
     correctAnswer: q.correctAnswer ?? (q.type === 'short-answer' ? '' : 0)
   }));
 
-  const finalData = {
-    title: data.title || '',
-    classId: data.classId || '',
-    questions: cleanQuestions
-  };
-
   try {
     if (id && !id.startsWith('temp-')) {
       const docRef = doc(db, QUIZZES_COL, id);
-      await updateDoc(docRef, finalData);
+      await updateDoc(docRef, {
+        title: data.title,
+        classId: data.classId,
+        questions: cleanQuestions,
+        updatedAt: serverTimestamp()
+      });
       return id;
     } else {
-      const docRef = await addDoc(collection(db, QUIZZES_COL), finalData);
+      const docRef = await addDoc(collection(db, QUIZZES_COL), {
+        title: data.title || 'Kuis Baru',
+        classId: data.classId || '',
+        questions: cleanQuestions,
+        createdAt: serverTimestamp()
+      });
       return docRef.id;
     }
   } catch (error) {
@@ -140,22 +157,11 @@ export const deleteQuiz = async (id: string) => {
 /**
  * SCORES SERVICES
  */
-export const getScores = async () => {
-  try {
-    const q = query(collection(db, SCORES_COL), orderBy('timestamp', 'desc'));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (error) {
-    console.error("Error getScores:", error);
-    throw error;
-  }
-};
-
 export const addScore = async (scoreEntry: any) => {
   try {
     const docRef = await addDoc(collection(db, SCORES_COL), {
       ...scoreEntry,
-      timestamp: new Date().toISOString()
+      timestamp: serverTimestamp()
     });
     return docRef.id;
   } catch (error) {
@@ -176,7 +182,10 @@ export const deleteScore = async (id: string) => {
 export const updateScore = async (id: string, data: any) => {
   try {
     const { id: _, ...updateData } = data;
-    await updateDoc(doc(db, SCORES_COL, id), updateData);
+    await updateDoc(doc(db, SCORES_COL, id), {
+      ...updateData,
+      updatedAt: serverTimestamp()
+    });
   } catch (error) {
     console.error("Error updateScore:", error);
     throw error;

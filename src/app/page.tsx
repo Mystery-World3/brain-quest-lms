@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getClasses } from '@/services/database';
+import { listenToClasses } from '@/services/database';
 import { Class } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -22,26 +22,21 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const classes = await getClasses();
-        // Hanya tampilkan kelas yang aktif
-        setAvailableClasses(classes.filter(c => c.active));
-      } catch (error) {
-        console.error("Gagal memuat kelas dari database:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
+    // Gunakan listener real-time agar ketersediaan kelas instan
+    const unsubscribe = listenToClasses((classes) => {
+      setAvailableClasses(classes.filter(c => c.active));
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleStart = () => {
     if (selectedClass && studentName) {
-      const className = availableClasses.find(c => c.id === selectedClass)?.name || '';
+      const selectedCls = availableClasses.find(c => c.id === selectedClass);
       localStorage.setItem('student_name', studentName);
       localStorage.setItem('student_class', selectedClass);
-      localStorage.setItem('student_class_name', className);
+      localStorage.setItem('student_class_name', selectedCls?.name || 'Kelas');
       router.push(`/student/quiz/${selectedClass}`);
     }
   };
@@ -77,7 +72,7 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent className="space-y-6 p-6 md:p-8">
               {loading ? (
-                <div className="text-center py-10 font-black text-muted-foreground animate-pulse">Memuat Kelas...</div>
+                <div className="text-center py-10 font-black text-muted-foreground animate-pulse">Menghubungkan ke Cloud...</div>
               ) : !showNameInput ? (
                 <div className="space-y-5 animate-in fade-in zoom-in-95 duration-500">
                   <div className="space-y-3">
@@ -87,14 +82,13 @@ export default function LandingPage() {
                         <SelectValue placeholder="-- Pilih Kelas --" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
-                        {availableClasses.map((cls) => (
+                        {availableClasses.length > 0 ? availableClasses.map((cls) => (
                           <SelectItem key={cls.id} value={cls.id} className="h-12 md:h-14 text-base md:text-lg font-bold">
                             {cls.name}
                           </SelectItem>
-                        ))}
-                        {availableClasses.length === 0 && (
+                        )) : (
                           <div className="p-4 text-center text-muted-foreground font-bold">
-                            Belum ada kelas aktif di database.
+                            Belum ada kelas aktif.
                           </div>
                         )}
                       </SelectContent>
