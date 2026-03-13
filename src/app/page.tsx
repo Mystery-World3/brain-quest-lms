@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { GraduationCap, BookOpen, ChevronRight, Sparkles } from 'lucide-react';
+import { GraduationCap, BookOpen, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function LandingPage() {
@@ -22,7 +22,7 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Gunakan listener real-time agar ketersediaan kelas instan
+    // Listener real-time untuk sinkronisasi instan kelas aktif
     const unsubscribe = listenToClasses((classes) => {
       setAvailableClasses(classes.filter(c => c.active));
       setLoading(false);
@@ -72,7 +72,10 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent className="space-y-6 p-6 md:p-8">
               {loading ? (
-                <div className="text-center py-10 font-black text-muted-foreground animate-pulse">Menghubungkan ke Cloud...</div>
+                <div className="flex flex-col items-center justify-center py-10 gap-3">
+                  <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                  <p className="font-black text-muted-foreground animate-pulse">Menghubungkan ke Cloud...</p>
+                </div>
               ) : !showNameInput ? (
                 <div className="space-y-5 animate-in fade-in zoom-in-95 duration-500">
                   <div className="space-y-3">

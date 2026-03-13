@@ -3,39 +3,49 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { listenToScores, getClasses, getQuizzes } from '@/services/database';
-import { Class } from '@/lib/types';
-import { Users, BookOpen, CheckCircle, TrendingUp, Clock } from 'lucide-react';
+import { listenToScores, listenToClasses, listenToQuizzes } from '@/services/database';
+import { Class, Quiz } from '@/lib/types';
+import { Users, BookOpen, CheckCircle, TrendingUp, Clock, Loader2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
 
 export default function TeacherDashboard() {
   const [scores, setScores] = useState<any[]>([]);
-  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadMaster = async () => {
-      try {
-        const [cls, qz] = await Promise.all([getClasses(), getQuizzes()]);
-        setClasses(cls);
-        setQuizzes(qz);
-      } catch (err) {
-        console.error("Dashboard master load failed:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadMaster();
-
-    // Listener Real-time!
-    const unsubscribe = listenToScores((data) => {
+    // Gunakan listener untuk semua data agar dashboard benar-benar real-time
+    const unsubscribeScores = listenToScores((data) => {
       setScores(data);
     });
 
-    return () => unsubscribe();
+    const unsubscribeClasses = listenToClasses((data) => {
+      setClasses(data);
+      // Matikan loading setelah data master (kelas) pertama kali diterima
+      setLoading(false);
+    });
+
+    const unsubscribeQuizzes = listenToQuizzes((data) => {
+      setQuizzes(data);
+    });
+
+    return () => {
+      unsubscribeScores();
+      unsubscribeClasses();
+      unsubscribeQuizzes();
+    };
   }, []);
+
+  if (loading) {
+    return (
+      <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        <p className="font-black text-muted-foreground animate-pulse">Sinkronisasi Cloud Dashboard...</p>
+      </div>
+    );
+  }
 
   const activeClassesCount = classes.filter(c => c.active).length;
   const activeQuizzesCount = quizzes.length;
@@ -56,12 +66,11 @@ export default function TeacherDashboard() {
     const avg = classScores.length > 0 
       ? Math.round(classScores.reduce((acc, s) => acc + s.score, 0) / classScores.length)
       : 0;
-    return { name: cls.name.replace('Kelas ', ''), score: avg };
+    return { name: (cls.name || 'Kelas').replace('Kelas ', ''), score: avg };
   }).filter(d => d.score > 0 || classes.length <= 5);
 
   const finalChartData = chartData.length > 0 ? chartData : [
-    { name: '7-A', score: 0 },
-    { name: '7-B', score: 0 },
+    { name: '-', score: 0 }
   ];
 
   const recentActivities = scores.slice(0, 8).map(s => ({
