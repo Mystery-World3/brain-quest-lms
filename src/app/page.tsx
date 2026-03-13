@@ -28,7 +28,13 @@ export default function LandingPage() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Fallback safety: Jika koneksi sangat lambat, paksa matikan loading setelah 6 detik
+    const timer = setTimeout(() => setLoading(false), 6000);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleStart = () => {

@@ -40,6 +40,7 @@ export const listenToClasses = (callback: (classes: Class[]) => void) => {
     callback(classes);
   }, (error) => {
     console.error("Listen to classes error:", error);
+    callback([]); // Matikan loading di UI dengan mengirim array kosong jika error
   });
 };
 
@@ -49,7 +50,6 @@ export const saveClass = async (classData: Partial<Class>) => {
   try {
     if (id && !id.startsWith('temp-')) {
       const docRef = doc(db, CLASSES_COL, id);
-      // Ambil data lama agar tidak menimpa field yang tidak dikirim (seperti nama saat toggle status)
       const existingDoc = await getDoc(docRef);
       const existingData = existingDoc.exists() ? existingDoc.data() : {};
       
@@ -105,6 +105,7 @@ export const listenToQuizzes = (callback: (quizzes: Quiz[]) => void) => {
     callback(quizzes);
   }, (error) => {
     console.error("Listen to quizzes error:", error);
+    callback([]); // Matikan loading di UI
   });
 };
 
@@ -199,6 +200,7 @@ export const listenToScores = (callback: (scores: any[]) => void) => {
     callback(scores);
   }, (error) => {
     console.error("Listen to scores error:", error);
+    callback([]); // Matikan loading di UI
   });
 };
 
@@ -214,5 +216,6 @@ export const listenToLeaderboard = (quizId: string, classId: string, callback: (
     callback(scores);
   }, (error) => {
     console.error("Listen to leaderboard error:", error);
+    callback([]); // Matikan loading di UI
   });
 };
