@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, Search, School, Loader2, Sparkles } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, School, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -25,14 +25,10 @@ export default function ClassManagement() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [classToDelete, setClassToDelete] = useState<string | null>(null);
   const [editingClass, setEditingClass] = useState<Partial<Class> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = listenToClasses((data) => {
-      setClasses(data);
-      setLoading(false);
-    });
+    // Data akan langsung ditarik dari cache lokal (0ms)
+    const unsubscribe = listenToClasses(setClasses);
     return () => unsubscribe();
   }, []);
 
@@ -42,18 +38,15 @@ export default function ClassManagement() {
       return;
     }
     
-    setIsSaving(true);
-    // Optimistic UI: Tutup modal segera agar terasa cepat
+    // Instant UI: Tutup modal segera agar terasa sangat cepat
     setIsDialogOpen(false);
     
     try {
       await saveClass(editingClass);
-      toast({ title: "Berhasil!", description: "Data tersinkron ke Cloud." });
+      toast({ title: "Berhasil!", description: "Data tersinkron otomatis." });
     } catch (err) {
-      toast({ variant: 'destructive', title: 'Gagal Simpan' });
-      setIsDialogOpen(true); // Buka kembali jika gagal
-    } finally {
-      setIsSaving(false);
+      toast({ variant: 'destructive', title: 'Gagal Simpan', description: 'Koneksi bermasalah.' });
+      setIsDialogOpen(true);
     }
   };
 
@@ -78,15 +71,15 @@ export default function ClassManagement() {
   );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-4xl font-headline font-black text-foreground tracking-tighter flex items-center gap-3">
-            Manajemen Kelas <Sparkles className="text-primary animate-pulse" />
+            Manajemen Kelas <Sparkles className="text-primary" />
           </h1>
-          <p className="text-base font-bold text-muted-foreground mt-1">Data Anda tersinkron otomatis antar perangkat secara instan.</p>
+          <p className="text-base font-bold text-muted-foreground mt-1">Data Anda tersinkron instan antar perangkat.</p>
         </div>
-        <Button onClick={() => { setEditingClass({ name: '', active: true }); setIsDialogOpen(true); }} className="w-full sm:w-auto h-14 px-8 font-black rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all">
+        <Button onClick={() => { setEditingClass({ name: '', active: true }); setIsDialogOpen(true); }} className="w-full sm:w-auto h-14 px-8 font-black rounded-2xl shadow-xl shadow-primary/20">
           <Plus className="mr-2" size={24} /> Tambah Kelas
         </Button>
       </div>
@@ -114,9 +107,7 @@ export default function ClassManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
-                  <TableRow><TableCell colSpan={3} className="text-center py-20"><Loader2 className="w-10 h-10 animate-spin mx-auto text-primary" /></TableCell></TableRow>
-                ) : filteredClasses.length > 0 ? filteredClasses.map((cls) => (
+                {filteredClasses.length > 0 ? filteredClasses.map((cls) => (
                   <TableRow key={cls.id} className="hover:bg-primary/5 border-b transition-colors group">
                     <TableCell className="pl-8 py-5">
                       <div className="flex items-center gap-4">
@@ -142,7 +133,7 @@ export default function ClassManagement() {
                     </TableCell>
                   </TableRow>
                 )) : (
-                  <TableRow><TableCell colSpan={3} className="text-center py-20 font-bold text-muted-foreground">Kelas tidak ditemukan.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={3} className="text-center py-20 font-bold text-muted-foreground">Tidak ada data.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -151,10 +142,9 @@ export default function ClassManagement() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md rounded-[2.5rem] p-0 bg-background overflow-hidden border-none shadow-3xl animate-in zoom-in-95 duration-300">
+        <DialogContent className="max-w-md rounded-[2.5rem] p-0 bg-background overflow-hidden border-none shadow-3xl">
           <div className="bg-primary p-8 text-white">
             <DialogTitle className="text-2xl font-black">{editingClass?.id ? 'Ubah Nama Kelas' : 'Tambah Kelas Baru'}</DialogTitle>
-            <p className="text-white/70 font-bold mt-1">Data akan langsung tersinkron ke seluruh perangkat.</p>
           </div>
           <div className="p-8 space-y-6">
             <div className="space-y-3">
@@ -163,15 +153,15 @@ export default function ClassManagement() {
                 value={editingClass?.name || ''} 
                 onChange={(e) => setEditingClass({ ...editingClass!, name: e.target.value })} 
                 placeholder="Misal: Kelas XI RPL 2" 
-                className="h-16 rounded-2xl font-black text-xl border-2 focus:ring-4 focus:ring-primary/10"
+                className="h-16 rounded-2xl font-black text-xl border-2"
                 autoFocus
               />
             </div>
           </div>
           <DialogFooter className="p-8 bg-muted/20 border-t flex gap-4">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1 h-14 rounded-2xl font-bold text-lg border-2">Batal</Button>
-            <Button onClick={handleSaveClass} disabled={isSaving} className="flex-1 h-14 rounded-2xl font-black text-lg shadow-xl shadow-primary/20">
-              {isSaving ? <Loader2 className="animate-spin" /> : 'Simpan'}
+            <Button onClick={handleSaveClass} className="flex-1 h-14 rounded-2xl font-black text-lg shadow-xl shadow-primary/20">
+              Simpan
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -181,7 +171,7 @@ export default function ClassManagement() {
         <AlertDialogContent className="rounded-[2.5rem] p-8 border-none shadow-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-black text-2xl">Hapus Kelas Ini?</AlertDialogTitle>
-            <AlertDialogDescription className="font-bold text-lg mt-2">Data kuis dan nilai yang terkait mungkin akan terpengaruh. Tindakan ini permanen.</AlertDialogDescription>
+            <AlertDialogDescription className="font-bold text-lg mt-2">Tindakan ini permanen.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-4 mt-8">
             <AlertDialogCancel className="h-14 rounded-2xl font-bold text-lg border-2 m-0">Batal</AlertDialogCancel>

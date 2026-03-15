@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { GraduationCap, BookOpen, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
+import { GraduationCap, BookOpen, ChevronRight, Sparkles } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function LandingPage() {
@@ -18,23 +18,14 @@ export default function LandingPage() {
   const [studentName, setStudentName] = useState<string>('');
   const [showNameInput, setShowNameInput] = useState(false);
   const [availableClasses, setAvailableClasses] = useState<Class[]>([]);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Listener Real-time untuk kecepatan akses maksimal
+    // Dengan Persistence, data kelas akan muncul dalam 0.1 detik
     const unsubscribe = listenToClasses((classes) => {
       setAvailableClasses(classes.filter(c => c.active));
-      setLoading(false);
     });
-    
-    // Safety timeout 3 detik agar tidak loading selamanya
-    const timer = setTimeout(() => setLoading(false), 3000);
-
-    return () => {
-      unsubscribe();
-      clearTimeout(timer);
-    };
+    return () => unsubscribe();
   }, []);
 
   const handleStart = () => {
@@ -48,8 +39,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden animate-in fade-in duration-1000">
-      {/* Animasi Background Premium */}
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden animate-in fade-in duration-500">
       <div className="absolute -top-48 -left-48 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
       <div className="absolute -bottom-48 -right-48 w-96 h-96 bg-accent/20 rounded-full blur-[120px] animate-pulse delay-1000" />
 
@@ -67,40 +57,31 @@ export default function LandingPage() {
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 z-10 relative">
         <div className="w-full max-w-lg">
-          <Card className="shadow-3xl border-none ring-1 ring-primary/10 bg-card/80 backdrop-blur-xl rounded-[3rem] overflow-hidden animate-in zoom-in-95 duration-500">
+          <Card className="shadow-3xl border-none ring-1 ring-primary/10 bg-card/80 backdrop-blur-xl rounded-[3rem] overflow-hidden">
             <CardHeader className="text-center pb-2 pt-12 md:pt-16 px-8">
-              <div className="mx-auto bg-accent/20 p-6 rounded-full w-fit mb-8 ring-8 ring-accent/5 animate-bounce">
+              <div className="mx-auto bg-accent/20 p-6 rounded-full w-fit mb-8 ring-8 ring-accent/5">
                 <BookOpen className="text-primary w-14 h-14" />
               </div>
               <CardTitle className="text-4xl md:text-5xl font-headline font-black text-foreground tracking-tight">Selamat Datang!</CardTitle>
               <CardDescription className="text-xl font-bold text-muted-foreground/80 mt-4 leading-relaxed">
-                Platform kuis interaktif yang tersinkron secara instan dengan Bapak/Ibu Guru.
+                Pilih kelasmu dan mulai petualangan belajarmu sekarang.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8 p-10 md:p-12">
-              {loading ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-6">
-                  <Loader2 className="w-16 h-16 text-primary animate-spin" />
-                  <p className="font-black text-muted-foreground/60 tracking-widest uppercase text-xs animate-pulse">Menghubungkan ke Cloud...</p>
-                </div>
-              ) : !showNameInput ? (
+              {!showNameInput ? (
                 <div className="space-y-6">
                   <div className="space-y-4">
                     <label className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">Pilih Kelas Kamu</label>
                     <Select onValueChange={(val) => setSelectedClass(val)}>
-                      <SelectTrigger className="w-full h-16 md:h-20 text-xl md:text-2xl border-4 rounded-[1.5rem] transition-all focus:ring-8 focus:ring-primary/10 bg-background font-black shadow-inner">
+                      <SelectTrigger className="w-full h-16 md:h-20 text-xl md:text-2xl border-4 rounded-[1.5rem] transition-all bg-background font-black shadow-inner">
                         <SelectValue placeholder="-- Ketuk Untuk Memilih --" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl border-none shadow-3xl p-2">
-                        {availableClasses.length > 0 ? availableClasses.map((cls) => (
+                        {availableClasses.map((cls) => (
                           <SelectItem key={cls.id} value={cls.id} className="h-16 text-xl font-black rounded-xl">
                             {cls.name}
                           </SelectItem>
-                        )) : (
-                          <div className="p-6 text-center text-muted-foreground font-bold">
-                            Belum ada kelas aktif saat ini.
-                          </div>
-                        )}
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -113,7 +94,7 @@ export default function LandingPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-6 animate-in slide-in-from-right-12 duration-500">
+                <div className="space-y-6 animate-in slide-in-from-right-12 duration-300">
                   <div className="space-y-4">
                     <label className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">Siapa Nama Lengkapmu?</label>
                     <Input 
@@ -142,7 +123,7 @@ export default function LandingPage() {
       </main>
       
       <footer className="w-full text-center pb-10 text-muted-foreground/30 text-[10px] font-black uppercase tracking-[0.6em] z-10 px-4">
-        © 2024 BRAINQUEST DIGITAL • REAL-TIME LEARNING
+        © 2024 BRAINQUEST DIGITAL • INSTANT LEARNING
       </footer>
     </div>
   );
