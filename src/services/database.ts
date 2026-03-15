@@ -22,6 +22,19 @@ const QUIZZES_COL = 'quizzes';
 const SCORES_COL = 'scores';
 
 /**
+ * Helper to clean data before sending to Firestore
+ */
+const cleanData = (data: any) => {
+  const clean: any = {};
+  Object.keys(data).forEach(key => {
+    if (data[key] !== undefined && key !== 'id') {
+      clean[key] = data[key];
+    }
+  });
+  return clean;
+};
+
+/**
  * CLASSES SERVICES
  */
 export const getClasses = async () => {
@@ -35,7 +48,7 @@ export const getClasses = async () => {
 };
 
 export const listenToClasses = (callback: (classes: Class[]) => void) => {
-  const q = query(collection(db, CLASSES_COL), orderBy('name', 'asc'), limit(50));
+  const q = query(collection(db, CLASSES_COL), orderBy('name', 'asc'), limit(100));
   return onSnapshot(q, (querySnapshot) => {
     const classes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
     callback(classes);
@@ -47,18 +60,20 @@ export const listenToClasses = (callback: (classes: Class[]) => void) => {
 
 export const saveClass = async (classData: Partial<Class>) => {
   const { id, ...data } = classData;
+  const cleaned = cleanData(data);
+  
   try {
     if (id && !id.startsWith('temp-')) {
       const docRef = doc(db, CLASSES_COL, id);
       await updateDoc(docRef, {
-        ...data,
+        ...cleaned,
         updatedAt: serverTimestamp()
       });
       return id;
     } else {
       const finalData = {
-        name: data.name || 'Tanpa Nama',
-        active: data.active ?? true,
+        name: cleaned.name || 'Tanpa Nama',
+        active: cleaned.active ?? true,
         createdAt: serverTimestamp()
       };
       const docRef = await addDoc(collection(db, CLASSES_COL), finalData);
@@ -92,7 +107,7 @@ export const getQuizzes = async () => {
 };
 
 export const listenToQuizzes = (callback: (quizzes: Quiz[]) => void) => {
-  const q = query(collection(db, QUIZZES_COL), limit(50));
+  const q = query(collection(db, QUIZZES_COL), limit(100));
   return onSnapshot(q, (querySnapshot) => {
     const quizzes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
     callback(quizzes);
@@ -131,6 +146,7 @@ export const saveQuiz = async (quizData: Partial<Quiz>) => {
       return docRef.id;
     }
   } catch (error) {
+    console.error("Error saveQuiz:", error);
     throw error;
   }
 };
@@ -169,8 +185,9 @@ export const deleteScore = async (id: string) => {
 export const updateScore = async (id: string, data: any) => {
   try {
     const { id: _, ...updateData } = data;
+    const cleaned = cleanData(updateData);
     await updateDoc(doc(db, SCORES_COL, id), {
-      ...updateData,
+      ...cleaned,
       updatedAt: serverTimestamp()
     });
   } catch (error) {

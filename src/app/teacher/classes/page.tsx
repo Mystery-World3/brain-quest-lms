@@ -49,7 +49,7 @@ export default function ClassManagement() {
       await saveClass({ id: cls.id, name: cls.name, active: !cls.active });
       toast({ title: "Status Diperbarui" });
     } catch (err) {
-      toast({ variant: 'destructive', title: 'Gagal' });
+      toast({ variant: 'destructive', title: 'Gagal Update Status' });
     }
   };
 
@@ -62,9 +62,9 @@ export default function ClassManagement() {
     if (classToDelete) {
       try {
         await deleteClass(classToDelete);
-        toast({ title: "Berhasil" });
+        toast({ title: "Berhasil Dihapus" });
       } catch (err) {
-        toast({ variant: 'destructive', title: 'Gagal' });
+        toast({ variant: 'destructive', title: 'Gagal Menghapus' });
       }
     }
     setIsConfirmOpen(false);
@@ -78,14 +78,24 @@ export default function ClassManagement() {
   const handleSaveClass = async () => {
     if (!editingClass?.name?.trim()) return;
     setIsSaving(true);
+
+    const savePromise = saveClass(editingClass);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('timeout')), 3000)
+    );
+
     try {
-      await saveClass(editingClass);
-      setIsDialogOpen(false);
+      await Promise.race([savePromise, timeoutPromise]);
       toast({ title: "Berhasil Disimpan" });
-    } catch (err) {
-      toast({ variant: 'destructive', title: 'Gagal' });
+    } catch (err: any) {
+      if (err.message === 'timeout') {
+        toast({ title: "Sinkronisasi...", description: "Data sedang dikirim ke Cloud." });
+      } else {
+        toast({ variant: 'destructive', title: 'Gagal Menyimpan' });
+      }
     } finally {
       setIsSaving(false);
+      setIsDialogOpen(false);
     }
   };
 
@@ -166,7 +176,13 @@ export default function ClassManagement() {
           <div className="p-6 space-y-4">
             <div className="space-y-2">
               <label className="text-xs font-black uppercase text-muted-foreground ml-1">Nama Kelas</label>
-              <Input value={editingClass?.name || ''} onChange={(e) => setEditingClass({ ...editingClass!, name: e.target.value })} placeholder="Contoh: Kelas 7 - A" className="h-14 rounded-xl font-bold" />
+              <Input 
+                value={editingClass?.name || ''} 
+                onChange={(e) => setEditingClass({ ...editingClass!, name: e.target.value })} 
+                placeholder="Contoh: Kelas X SMK Tata Busana" 
+                className="h-14 rounded-xl font-bold"
+                disabled={isSaving}
+              />
             </div>
           </div>
           <DialogFooter className="p-6 bg-muted/20 border-t flex gap-3">
