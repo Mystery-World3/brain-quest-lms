@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -19,7 +20,6 @@ export default function TeacherLoginPage() {
     e.preventDefault();
     setLoading(true);
     
-    // Simulasi proses verifikasi
     setTimeout(() => {
       if (password === 'admin123') {
         localStorage.setItem('teacher_session', 'active');
@@ -40,7 +40,7 @@ export default function TeacherLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden font-body">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden font-body animate-in fade-in duration-700">
       {/* Background Decor */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px] -translate-y-1/2 translate-x-1/2 animate-pulse" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[150px] translate-y-1/2 -translate-x-1/2 animate-pulse delay-700" />
@@ -50,7 +50,7 @@ export default function TeacherLoginPage() {
         <ThemeToggle />
       </div>
 
-      <Card className="w-full max-w-md glass-morphism border-none ring-4 ring-primary/5 animate-in fade-in zoom-in duration-700 rounded-[3rem] overflow-hidden shadow-2xl relative z-10">
+      <Card className="w-full max-w-md glass-morphism border-none ring-4 ring-primary/5 animate-in zoom-in-95 duration-700 rounded-[3rem] overflow-hidden shadow-2xl relative z-10">
         <CardHeader className="text-center pt-14 pb-4">
           <div className="mx-auto bg-primary p-6 rounded-[2rem] w-fit mb-8 shadow-2xl shadow-primary/40 rotate-6 hover:rotate-0 transition-all duration-500 cursor-pointer group">
             <GraduationCap className="text-white w-14 h-14 group-hover:scale-110 transition-transform" />
@@ -81,7 +81,7 @@ export default function TeacherLoginPage() {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full h-16 font-black text-2xl rounded-[1.5rem] shadow-2xl shadow-primary/40 active:scale-95 transition-all group relative overflow-hidden"
+                className="w-full h-16 font-black text-2xl rounded-[1.5rem] shadow-2xl shadow-primary/40 active:scale-95 transition-all group relative overflow-hidden bg-primary text-white"
               >
                 <span className="relative z-10 flex items-center justify-center">
                   {loading ? 'Memverifikasi...' : 'Masuk Dashboard'} 
@@ -107,7 +107,7 @@ export default function TeacherLoginPage() {
         </CardContent>
       </Card>
       
-      <p className="absolute bottom-8 text-muted-foreground/40 text-[10px] font-black uppercase tracking-[0.5em]">
+      <p className="absolute bottom-8 text-muted-foreground/40 text-[10px] font-black uppercase tracking-[0.5em] animate-in slide-in-from-bottom-2 duration-1000">
         © 2024 BRAINQUEST DIGITAL
       </p>
     </div>

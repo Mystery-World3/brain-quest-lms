@@ -16,28 +16,22 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Gunakan Real-time Listeners untuk performa instan
-    const unsubScores = listenToScores(setScores);
+    const unsubScores = listenToScores((data) => {
+      setScores(data);
+      setLoading(false);
+    });
     const unsubClasses = listenToClasses(setClasses);
     const unsubQuizzes = listenToQuizzes(setQuizzes);
-
-    // Langsung matikan loading setelah data pertama masuk
-    const timer = setTimeout(() => setLoading(false), 2000);
 
     return () => {
       unsubScores();
       unsubClasses();
       unsubQuizzes();
-      clearTimeout(timer);
     };
   }, []);
 
-  useEffect(() => {
-    if (classes.length > 0 || scores.length > 0) setLoading(false);
-  }, [classes, scores]);
-
   if (loading) return (
-    <div className="h-[70vh] flex flex-col items-center justify-center gap-6">
+    <div className="h-[70vh] flex flex-col items-center justify-center gap-6 animate-in fade-in duration-500">
       <Loader2 className="w-16 h-16 text-primary animate-spin" />
       <p className="font-black text-muted-foreground tracking-[0.3em] uppercase text-xs animate-pulse">Menghubungkan ke Cloud...</p>
     </div>
@@ -62,15 +56,15 @@ export default function TeacherDashboard() {
           <h1 className="text-5xl font-headline font-black text-foreground tracking-tighter flex items-center gap-4">
             Dashboard Utama <Sparkles className="text-primary animate-bounce" />
           </h1>
-          <p className="text-lg font-bold text-muted-foreground mt-2">Data kuis dan performa siswa diperbarui setiap detik.</p>
+          <p className="text-lg font-bold text-muted-foreground mt-2">Data kuis dan performa siswa diperbarui setiap detik secara real-time.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
-          <Card key={i} className="border-none shadow-2xl rounded-[2rem] overflow-hidden student-card-hover transition-all bg-card/70 backdrop-blur-md">
+          <Card key={i} className="border-none shadow-2xl rounded-[2rem] overflow-hidden student-card-hover transition-all bg-card/70 backdrop-blur-md animate-in zoom-in-95 duration-500" style={{ animationDelay: `${i * 100}ms` }}>
             <CardContent className="p-8 flex items-center gap-6">
-              <div className={cn(stat.bg, stat.color, "p-5 rounded-3xl shadow-inner")}>
+              <div className={cn(stat.bg, stat.color, "p-5 rounded-3xl shadow-inner transform transition-transform hover:rotate-12")}>
                 <stat.icon size={32} />
               </div>
               <div>
@@ -83,7 +77,7 @@ export default function TeacherDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 border-none shadow-3xl rounded-[2.5rem] bg-card/60 backdrop-blur-xl overflow-hidden">
+        <Card className="lg:col-span-2 border-none shadow-3xl rounded-[2.5rem] bg-card/60 backdrop-blur-xl overflow-hidden animate-in slide-in-from-left-4 duration-700">
           <CardHeader className="p-10 border-b border-white/10">
             <CardTitle className="text-2xl font-black flex items-center gap-3">
               <TrendingUp className="text-primary" /> Statistik Performa Kelas
@@ -99,23 +93,23 @@ export default function TeacherDashboard() {
                   contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 50px rgba(0,0,0,0.15)', fontWeight: 'bold' }}
                   cursor={{ fill: 'hsl(var(--primary) / 0.05)', radius: 16 }}
                 />
-                <Bar dataKey="score" fill="hsl(var(--primary))" radius={[16, 16, 0, 0]} barSize={40} />
+                <Bar dataKey="score" fill="hsl(var(--primary))" radius={[16, 16, 0, 0]} barSize={40} className="animate-in slide-in-from-bottom duration-1000" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-3xl rounded-[2.5rem] bg-card/60 backdrop-blur-xl overflow-hidden">
+        <Card className="border-none shadow-3xl rounded-[2.5rem] bg-card/60 backdrop-blur-xl overflow-hidden animate-in slide-in-from-right-4 duration-700">
           <CardHeader className="p-10 border-b bg-primary/5">
             <CardTitle className="text-2xl font-black flex items-center gap-3 text-primary">
-              <Clock /> Aktivitas Terbaru
+              <Clock className="animate-pulse" /> Aktivitas Terbaru
             </CardTitle>
           </CardHeader>
           <CardContent className="p-10">
             <div className="space-y-8">
               {scores.slice(0, 6).map((item, i) => (
-                <div key={i} className="flex gap-5 group">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-all shadow-inner">
+                <div key={i} className="flex gap-5 group animate-in fade-in slide-in-from-right-2 duration-300" style={{ animationDelay: `${i * 100}ms` }}>
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-all shadow-inner group-hover:scale-110 group-hover:rotate-6">
                     <CheckCircle size={24} />
                   </div>
                   <div className="min-w-0">

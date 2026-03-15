@@ -30,13 +30,11 @@ export default function QuizPage() {
     const name = localStorage.getItem('student_name') || 'Siswa';
     setStudentName(name);
 
-    // Gunakan listener real-time agar kuis selalu sinkron dengan bank soal terbaru di Cloud
     const unsubscribe = listenToQuizzes((quizzes) => {
       const foundQuiz = quizzes.find(q => q.classId === classId);
       
       if (foundQuiz) {
         setQuiz(foundQuiz);
-        // Inisialisasi jawaban jika belum ada
         setAnswers(prev => prev.length === 0 ? new Array(foundQuiz.questions.length).fill(-1) : prev);
         setError(null);
       } else {
@@ -51,22 +49,22 @@ export default function QuizPage() {
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="font-black text-muted-foreground animate-pulse tracking-widest uppercase text-xs">Menghubungkan ke Cloud...</p>
       </div>
     </div>
   );
 
   if (error || !quiz) return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <Card className="max-w-md w-full rounded-[2rem] border-none shadow-2xl overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 animate-in zoom-in duration-500">
+      <Card className="max-w-md w-full rounded-[2rem] border-none shadow-2xl overflow-hidden glass-morphism">
         <div className="bg-destructive p-8 text-white text-center">
           <AlertCircle size={48} className="mx-auto mb-4 animate-bounce" />
           <h2 className="text-2xl font-black">Ups! Terjadi Masalah</h2>
         </div>
         <CardContent className="p-8 text-center space-y-6">
           <p className="text-lg font-bold text-muted-foreground leading-relaxed">{error}</p>
-          <Button onClick={() => router.push('/')} className="w-full h-14 rounded-xl font-black text-lg">
+          <Button onClick={() => router.push('/')} className="w-full h-14 rounded-xl font-black text-lg shadow-xl shadow-destructive/20 transition-all active:scale-95">
             Kembali ke Beranda
           </Button>
         </CardContent>
@@ -143,13 +141,13 @@ export default function QuizPage() {
   const isCurrentAnswered = answers[currentIdx] !== -1 && answers[currentIdx] !== '';
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center">
+    <div className="min-h-screen bg-background p-4 md:p-8 flex flex-col items-center animate-in fade-in duration-700">
       <div className="fixed top-4 right-4 md:top-6 md:right-6 z-50">
         <ThemeToggle />
       </div>
 
       <div className="w-full max-w-4xl space-y-6 md:space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-center bg-card p-6 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-xl border-2 border-primary/10 gap-4 md:gap-6 backdrop-blur-md">
+        <div className="flex flex-col md:flex-row justify-between items-center bg-card p-6 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-xl border-2 border-primary/10 gap-4 md:gap-6 backdrop-blur-md animate-in slide-in-from-top-4 duration-500">
           <div className="flex items-center gap-4 md:gap-6">
             <div className="bg-primary/10 p-3 md:p-4 rounded-xl md:rounded-2xl ring-2 ring-primary/20 shrink-0">
                <Star className="text-primary fill-primary animate-spin-slow w-6 h-6 md:w-8 md:h-8" />
@@ -165,18 +163,18 @@ export default function QuizPage() {
               <span className="text-base md:text-lg font-black text-foreground">Soal {currentIdx + 1} / {quiz.questions.length}</span>
             </div>
             <div className="relative pt-1">
-               <Progress value={progress} className="w-full md:w-56 h-3 md:h-4 rounded-full bg-muted border-2 border-primary/5" />
+               <Progress value={progress} className="w-full md:w-56 h-3 md:h-4 rounded-full bg-muted border-2 border-primary/5 transition-all duration-500" />
             </div>
           </div>
         </div>
 
         <Card className={cn(
-          "border-none shadow-2xl overflow-hidden rounded-[2rem] md:rounded-[3rem] transition-all duration-500 bg-card/50 backdrop-blur-sm",
+          "border-none shadow-2xl overflow-hidden rounded-[2rem] md:rounded-[3rem] transition-all duration-500 bg-card/50 backdrop-blur-xl",
           isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
         )}>
           <CardHeader className="bg-primary/5 border-b border-primary/10 py-8 md:py-12 px-6 md:px-16">
             <CardTitle className="text-2xl md:text-4xl leading-snug text-foreground font-headline font-black flex items-start gap-3 md:gap-4">
-              <span className="bg-primary text-white px-3 md:px-4 py-1 rounded-xl md:rounded-2xl shadow-lg shrink-0 text-lg md:text-2xl">{currentIdx + 1}</span> 
+              <span className="bg-primary text-white px-3 md:px-4 py-1 rounded-xl md:rounded-2xl shadow-lg shrink-0 text-lg md:text-2xl transform hover:rotate-6 transition-transform">{currentIdx + 1}</span> 
               <span className="flex-1">{currentQuestion.text}</span>
             </CardTitle>
           </CardHeader>
@@ -190,19 +188,19 @@ export default function QuizPage() {
                 {currentQuestion.options.map((option, i) => {
                   const isSelected = answers[currentIdx] === i;
                   return (
-                    <div key={i}>
+                    <div key={i} className="animate-in fade-in zoom-in-95 duration-300" style={{ animationDelay: `${i * 100}ms` }}>
                       <Label
                         htmlFor={`opt-${i}`}
                         className={cn(
                           "flex items-center gap-4 md:gap-6 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-4 cursor-pointer transition-all duration-300 active:scale-95 group relative overflow-hidden h-full",
                           isSelected 
-                            ? 'border-primary bg-primary/10 shadow-xl ring-4 ring-primary/20 translate-y-[-4px]' 
+                            ? 'border-primary bg-primary/10 shadow-xl ring-4 ring-primary/20 translate-y-[-4px] answer-selected' 
                             : 'border-border bg-card hover:border-accent hover:bg-accent/5 hover:translate-y-[-2px]'
                         )}
                       >
                         <RadioGroupItem value={i.toString()} id={`opt-${i}`} className="sr-only" />
                         <div className={cn(
-                          "w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center font-black text-xl md:text-2xl border-4 transition-all duration-300 group-hover:rotate-6 shrink-0",
+                          "w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center font-black text-xl md:text-2xl border-4 transition-all duration-300 group-hover:rotate-6 shrink-0 shadow-sm",
                           isSelected 
                             ? 'bg-primary border-primary text-white shadow-xl' 
                             : 'border-muted-foreground/10 text-muted-foreground'
@@ -212,7 +210,7 @@ export default function QuizPage() {
                         <span className="text-lg md:text-2xl font-black">{option}</span>
                         
                         {isSelected && (
-                          <div className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 text-primary animate-in fade-in zoom-in">
+                          <div className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 text-primary animate-in fade-in zoom-in duration-300">
                             <CheckCircle2 className="w-6 h-6 md:w-8 md:h-8" />
                           </div>
                         )}
@@ -223,8 +221,8 @@ export default function QuizPage() {
               </RadioGroup>
             ) : (
               <div className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="bg-accent/5 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-4 border-dashed border-accent/20">
-                  <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4 text-accent">
+                <div className="bg-accent/5 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-4 border-dashed border-accent/20 transition-all hover:bg-accent/10 hover:border-accent/40 group">
+                  <div className="flex items-center gap-3 md:gap-4 mb-3 md:mb-4 text-accent group-hover:scale-105 transition-transform">
                     <Type size={20} className="md:w-6 md:h-6" />
                     <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">Ketik Jawabanmu</span>
                   </div>
@@ -235,7 +233,7 @@ export default function QuizPage() {
                     className="h-16 md:h-20 text-xl md:text-3xl font-black text-center bg-background border-4 rounded-[1.25rem] md:rounded-[1.5rem] focus:ring-8 focus:ring-accent/20 focus:border-accent transition-all shadow-inner"
                   />
                 </div>
-                <p className="text-center text-muted-foreground font-bold italic text-sm md:text-base">
+                <p className="text-center text-muted-foreground font-bold italic text-sm md:text-base animate-pulse">
                   *tulis jawaban hanya angka saja
                 </p>
               </div>
@@ -246,7 +244,7 @@ export default function QuizPage() {
               variant="outline" 
               onClick={prevQuestion}
               disabled={currentIdx === 0}
-              className="h-14 md:h-16 px-8 md:px-10 rounded-xl md:rounded-2xl border-4 font-black text-lg md:text-xl transition-all hover:bg-background w-full sm:w-auto"
+              className="h-14 md:h-16 px-8 md:px-10 rounded-xl md:rounded-2xl border-4 font-black text-lg md:text-xl transition-all hover:bg-background w-full sm:w-auto active:scale-95"
             >
               <ChevronLeft className="mr-2 w-5 h-5 md:w-6 md:h-6" /> Kembali
             </Button>
@@ -257,13 +255,13 @@ export default function QuizPage() {
                 disabled={!isCurrentAnswered}
                 className="h-14 md:h-16 px-10 md:px-12 bg-green-600 hover:bg-green-700 text-white font-black text-lg md:text-xl rounded-xl md:rounded-2xl shadow-xl shadow-green-500/40 active:scale-95 transition-all w-full sm:w-auto"
               >
-                Selesai <Send className="ml-2 md:ml-3 w-5 h-5 md:w-6 md:h-6" />
+                Selesai <Send className="ml-2 md:ml-3 w-5 h-5 md:w-6 md:h-6 animate-pulse" />
               </Button>
             ) : (
               <Button 
                 onClick={nextQuestion}
                 disabled={!isCurrentAnswered}
-                className="h-14 md:h-16 px-8 md:px-10 rounded-xl md:rounded-2xl font-black text-lg md:text-xl transition-all shadow-xl shadow-primary/20 w-full sm:w-auto"
+                className="h-14 md:h-16 px-8 md:px-10 rounded-xl md:rounded-2xl font-black text-lg md:text-xl transition-all shadow-xl shadow-primary/20 w-full sm:w-auto active:scale-95 bg-primary hover:bg-primary/90"
               >
                 Berikutnya <ChevronRight className="ml-2 w-5 h-5 md:w-6 md:h-6" />
               </Button>
