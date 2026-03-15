@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { listenToScores, listenToClasses, listenToQuizzes } from '@/services/database';
 import { Class, Quiz } from '@/lib/types';
-import { Users, BookOpen, CheckCircle, TrendingUp, Clock, Loader2 } from 'lucide-react';
+import { Users, BookOpen, CheckCircle, TrendingUp, Clock, Loader2, Sparkles } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
 
@@ -16,140 +16,116 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Gabungan listener real-time dengan timeout paksa 3 detik
-    const unsubscribeScores = listenToScores(setScores);
-    const unsubscribeClasses = listenToClasses(setClasses);
-    const unsubscribeQuizzes = listenToQuizzes(setQuizzes);
+    // Gunakan Real-time Listeners untuk performa instan
+    const unsubScores = listenToScores(setScores);
+    const unsubClasses = listenToClasses(setClasses);
+    const unsubQuizzes = listenToQuizzes(setQuizzes);
 
-    const timer = setTimeout(() => setLoading(false), 3000);
+    // Langsung matikan loading setelah data pertama masuk
+    const timer = setTimeout(() => setLoading(false), 2000);
 
     return () => {
-      unsubscribeScores();
-      unsubscribeClasses();
-      unsubscribeQuizzes();
+      unsubScores();
+      unsubClasses();
+      unsubQuizzes();
       clearTimeout(timer);
     };
   }, []);
 
-  // Update loading state when data arrives
   useEffect(() => {
-    if (classes.length > 0 || scores.length > 0) {
-      setLoading(false);
-    }
+    if (classes.length > 0 || scores.length > 0) setLoading(false);
   }, [classes, scores]);
 
-  if (loading) {
-    return (
-      <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="font-black text-muted-foreground tracking-widest uppercase text-xs">Sinkronisasi Instan...</p>
-      </div>
-    );
-  }
-
-  const activeClassesCount = classes.filter(c => c.active).length;
-  const activeQuizzesCount = quizzes.length;
-  const totalStudentsFinished = scores.length;
-  const averageScore = scores.length > 0 
-    ? Math.round(scores.reduce((acc, s) => acc + s.score, 0) / scores.length) 
-    : 0;
+  if (loading) return (
+    <div className="h-[70vh] flex flex-col items-center justify-center gap-6">
+      <Loader2 className="w-16 h-16 text-primary animate-spin" />
+      <p className="font-black text-muted-foreground tracking-[0.3em] uppercase text-xs animate-pulse">Menghubungkan ke Cloud...</p>
+    </div>
+  );
 
   const stats = [
-    { label: 'Kelas Aktif', value: activeClassesCount, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: 'Kuis Cloud', value: activeQuizzesCount, icon: BookOpen, color: 'text-green-600', bg: 'bg-green-100' },
-    { label: 'Siswa Selesai', value: totalStudentsFinished, icon: CheckCircle, color: 'text-purple-600', bg: 'bg-purple-100' },
-    { label: 'Rata-rata Skor', value: `${averageScore}%`, icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-100' },
+    { label: 'Kelas Aktif', value: classes.filter(c => c.active).length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { label: 'Kuis Terbit', value: quizzes.length, icon: BookOpen, color: 'text-green-600', bg: 'bg-green-100' },
+    { label: 'Siswa Selesai', value: scores.length, icon: CheckCircle, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { label: 'Rata-rata Skor', value: `${scores.length > 0 ? Math.round(scores.reduce((a, s) => a + s.score, 0) / scores.length) : 0}%`, icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-100' },
   ];
 
-  const chartData = classes.slice(0, 10).map(cls => {
-    const classScores = scores.filter(s => s.classId === cls.id);
-    const avg = classScores.length > 0 
-      ? Math.round(classScores.reduce((acc, s) => acc + s.score, 0) / classScores.length)
-      : 0;
-    return { name: (cls.name || 'Kelas').replace('Kelas ', ''), score: avg };
-  });
-
-  const finalChartData = chartData.length > 0 ? chartData : [{ name: '-', score: 0 }];
-
-  const recentActivities = scores.slice(0, 5).map(s => ({
-    user: s.name,
-    action: `menyelesaikan "${s.quiz}"`,
-    time: s.timestamp ? new Date(s.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Baru'
+  const chartData = classes.slice(0, 10).map(cls => ({
+    name: (cls.name || 'Kelas').replace('Kelas ', ''),
+    score: Math.round(scores.filter(s => s.classId === cls.id).reduce((a, s) => a + s.score, 0) / (scores.filter(s => s.classId === cls.id).length || 1))
   }));
 
   return (
-    <div className="space-y-6 md:space-y-10">
-      <div className="flex justify-between items-end px-1">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+      <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground tracking-tighter">Dashboard Real-time</h1>
-          <p className="text-sm md:text-lg font-bold text-muted-foreground mt-1">Status kuis terpantau secara instan.</p>
+          <h1 className="text-5xl font-headline font-black text-foreground tracking-tighter flex items-center gap-4">
+            Dashboard Utama <Sparkles className="text-primary animate-bounce" />
+          </h1>
+          <p className="text-lg font-bold text-muted-foreground mt-2">Data kuis dan performa siswa diperbarui setiap detik.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
-          <Card key={i} className="border-none shadow-xl rounded-[1.5rem] bg-card/60 backdrop-blur-sm overflow-hidden">
-            <CardContent className="p-4 md:p-8 flex flex-col sm:flex-row items-center gap-3 md:gap-6 text-center sm:text-left">
-              <div className={cn(stat.bg, stat.color, "p-3 md:p-5 rounded-2xl shrink-0")}>
-                <stat.icon size={20} className="md:w-8 md:h-8" />
+          <Card key={i} className="border-none shadow-2xl rounded-[2rem] overflow-hidden student-card-hover transition-all bg-card/70 backdrop-blur-md">
+            <CardContent className="p-8 flex items-center gap-6">
+              <div className={cn(stat.bg, stat.color, "p-5 rounded-3xl shadow-inner")}>
+                <stat.icon size={32} />
               </div>
-              <div className="min-w-0">
-                <p className="text-[9px] md:text-xs font-black uppercase tracking-widest text-muted-foreground truncate">{stat.label}</p>
-                <h3 className="text-lg md:text-3xl font-black text-foreground truncate">{stat.value}</h3>
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/60">{stat.label}</p>
+                <h3 className="text-4xl font-black text-foreground">{stat.value}</h3>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
-        <Card className="lg:col-span-2 border-none shadow-2xl rounded-[1.5rem] md:rounded-[3rem] bg-card/50 backdrop-blur-md overflow-hidden">
-          <CardHeader className="p-6 md:p-10 border-b">
-            <CardTitle className="text-lg md:text-2xl font-black flex items-center gap-3">
-              <TrendingUp className="text-primary" /> Performa Kelas
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-2 border-none shadow-3xl rounded-[2.5rem] bg-card/60 backdrop-blur-xl overflow-hidden">
+          <CardHeader className="p-10 border-b border-white/10">
+            <CardTitle className="text-2xl font-black flex items-center gap-3">
+              <TrendingUp className="text-primary" /> Statistik Performa Kelas
             </CardTitle>
           </CardHeader>
-          <CardContent className="h-[250px] md:h-[400px] p-4 md:p-10">
+          <CardContent className="h-[400px] p-8">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={finalChartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} className="font-bold text-[10px]" />
-                <YAxis axisLine={false} tickLine={false} className="font-bold text-[10px]" />
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.05} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} className="font-bold text-xs" />
+                <YAxis axisLine={false} tickLine={false} className="font-bold text-xs" />
                 <Tooltip 
-                  contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
-                  cursor={{ fill: 'hsl(var(--primary) / 0.05)', radius: 10 }}
+                  contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 50px rgba(0,0,0,0.15)', fontWeight: 'bold' }}
+                  cursor={{ fill: 'hsl(var(--primary) / 0.05)', radius: 16 }}
                 />
-                <Bar dataKey="score" fill="hsl(var(--primary))" radius={[10, 10, 0, 0]} barSize={35} />
+                <Bar dataKey="score" fill="hsl(var(--primary))" radius={[16, 16, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-2xl rounded-[1.5rem] md:rounded-[3rem] bg-card/50 backdrop-blur-md overflow-hidden">
-          <CardHeader className="p-6 md:p-10 border-b bg-primary/5">
-            <CardTitle className="text-lg md:text-2xl font-black flex items-center gap-3 text-primary">
-              <Clock /> Aktivitas
+        <Card className="border-none shadow-3xl rounded-[2.5rem] bg-card/60 backdrop-blur-xl overflow-hidden">
+          <CardHeader className="p-10 border-b bg-primary/5">
+            <CardTitle className="text-2xl font-black flex items-center gap-3 text-primary">
+              <Clock /> Aktivitas Terbaru
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6 md:p-10">
-            <div className="space-y-6">
-              {recentActivities.length > 0 ? recentActivities.map((item, i) => (
-                <div key={i} className="flex gap-4 relative">
-                  <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0 ring-4 ring-primary/10">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+          <CardContent className="p-10">
+            <div className="space-y-8">
+              {scores.slice(0, 6).map((item, i) => (
+                <div key={i} className="flex gap-5 group">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-all shadow-inner">
+                    <CheckCircle size={24} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-black text-foreground truncate">{item.user}</p>
-                    <p className="text-xs text-muted-foreground font-bold">{item.action}</p>
-                    <p className="text-[9px] font-black uppercase text-muted-foreground/60 mt-0.5">{item.time}</p>
+                    <p className="text-lg font-black text-foreground truncate">{item.name}</p>
+                    <p className="text-sm text-muted-foreground font-bold leading-tight">Mengerjakan {item.quiz}</p>
+                    <p className="text-[10px] font-black uppercase text-primary mt-1 tracking-tighter">SKOR: {Math.round(item.score)}%</p>
                   </div>
                 </div>
-              )) : (
-                <div className="text-center py-10 opacity-20">
-                   <Users className="w-10 h-10 mx-auto mb-2" />
-                   <p className="font-bold text-xs">Kosong</p>
-                </div>
-              )}
+              ))}
+              {scores.length === 0 && <p className="text-center py-20 text-muted-foreground font-bold">Belum ada aktivitas.</p>}
             </div>
           </CardContent>
         </Card>

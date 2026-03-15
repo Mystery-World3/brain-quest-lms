@@ -22,12 +22,13 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Listener real-time dengan timeout paksa 3 detik untuk kecepatan maksimal
+    // Listener Real-time untuk kecepatan akses maksimal
     const unsubscribe = listenToClasses((classes) => {
       setAvailableClasses(classes.filter(c => c.active));
       setLoading(false);
     });
-
+    
+    // Safety timeout 3 detik agar tidak loading selamanya
     const timer = setTimeout(() => setLoading(false), 3000);
 
     return () => {
@@ -47,56 +48,57 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      <div className="absolute -top-24 -left-24 w-64 h-64 md:w-96 md:h-96 bg-primary/20 rounded-full blur-[80px] md:blur-[100px]" />
-      <div className="absolute -bottom-24 -right-24 w-64 h-64 md:w-96 md:h-96 bg-accent/20 rounded-full blur-[80px] md:blur-[100px]" />
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden animate-in fade-in duration-1000">
+      {/* Animasi Background Premium */}
+      <div className="absolute -top-48 -left-48 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute -bottom-48 -right-48 w-96 h-96 bg-accent/20 rounded-full blur-[120px] animate-pulse delay-1000" />
 
-      <header className="w-full p-4 md:p-8 flex items-center justify-between z-20 relative max-w-7xl mx-auto">
+      <header className="w-full p-6 md:p-10 flex items-center justify-between z-20 relative max-w-7xl mx-auto">
         <Link href="/teacher/login" className="group">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="bg-primary p-2 md:p-2.5 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
-              <GraduationCap size={24} className="md:w-7 md:h-7" />
+          <div className="flex items-center gap-4">
+            <div className="bg-primary p-3 rounded-2xl text-white shadow-2xl shadow-primary/40 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+              <GraduationCap size={28} />
             </div>
-            <span className="font-headline font-black text-lg md:text-2xl text-primary tracking-tighter uppercase">BRAINQUEST</span>
+            <span className="font-headline font-black text-2xl text-primary tracking-tighter uppercase">BRAINQUEST</span>
           </div>
         </Link>
         <ThemeToggle />
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 z-10 relative">
-        <div className="w-full max-w-md">
-          <Card className="shadow-2xl border-none ring-1 ring-primary/20 bg-card/90 backdrop-blur-md rounded-[2rem] md:rounded-[2.5rem] overflow-hidden">
-            <CardHeader className="text-center pb-2 pt-8 md:pt-12">
-              <div className="mx-auto bg-accent/20 p-4 md:p-5 rounded-full w-fit mb-4 md:mb-6 ring-4 ring-accent/10">
-                <BookOpen className="text-primary w-10 h-10 md:w-12 md:h-12" />
+        <div className="w-full max-w-lg">
+          <Card className="shadow-3xl border-none ring-1 ring-primary/10 bg-card/80 backdrop-blur-xl rounded-[3rem] overflow-hidden animate-in zoom-in-95 duration-500">
+            <CardHeader className="text-center pb-2 pt-12 md:pt-16 px-8">
+              <div className="mx-auto bg-accent/20 p-6 rounded-full w-fit mb-8 ring-8 ring-accent/5 animate-bounce">
+                <BookOpen className="text-primary w-14 h-14" />
               </div>
-              <CardTitle className="text-3xl md:text-4xl font-headline font-black text-foreground">Ayo Mulai!</CardTitle>
-              <CardDescription className="text-base md:text-lg font-semibold text-muted-foreground mt-2">
-                Siapkan dirimu untuk tantangan hari ini!
+              <CardTitle className="text-4xl md:text-5xl font-headline font-black text-foreground tracking-tight">Selamat Datang!</CardTitle>
+              <CardDescription className="text-xl font-bold text-muted-foreground/80 mt-4 leading-relaxed">
+                Platform kuis interaktif yang tersinkron secara instan dengan Bapak/Ibu Guru.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 p-6 md:p-8">
+            <CardContent className="space-y-8 p-10 md:p-12">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-3">
-                  <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                  <p className="font-black text-muted-foreground animate-pulse">Menghubungkan...</p>
+                <div className="flex flex-col items-center justify-center py-16 gap-6">
+                  <Loader2 className="w-16 h-16 text-primary animate-spin" />
+                  <p className="font-black text-muted-foreground/60 tracking-widest uppercase text-xs animate-pulse">Menghubungkan ke Cloud...</p>
                 </div>
               ) : !showNameInput ? (
-                <div className="space-y-5">
-                  <div className="space-y-3">
-                    <label className="text-[10px] md:text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Pilih Kelas</label>
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <label className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">Pilih Kelas Kamu</label>
                     <Select onValueChange={(val) => setSelectedClass(val)}>
-                      <SelectTrigger className="w-full h-14 md:h-16 text-lg md:text-xl border-2 rounded-2xl md:rounded-[1.25rem] transition-all focus:ring-4 focus:ring-primary/20 bg-background font-bold">
-                        <SelectValue placeholder="-- Pilih Kelas --" />
+                      <SelectTrigger className="w-full h-16 md:h-20 text-xl md:text-2xl border-4 rounded-[1.5rem] transition-all focus:ring-8 focus:ring-primary/10 bg-background font-black shadow-inner">
+                        <SelectValue placeholder="-- Ketuk Untuk Memilih --" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-2xl">
+                      <SelectContent className="rounded-2xl border-none shadow-3xl p-2">
                         {availableClasses.length > 0 ? availableClasses.map((cls) => (
-                          <SelectItem key={cls.id} value={cls.id} className="h-12 md:h-14 text-base md:text-lg font-bold">
+                          <SelectItem key={cls.id} value={cls.id} className="h-16 text-xl font-black rounded-xl">
                             {cls.name}
                           </SelectItem>
                         )) : (
-                          <div className="p-4 text-center text-muted-foreground font-bold">
-                            Belum ada kelas aktif.
+                          <div className="p-6 text-center text-muted-foreground font-bold">
+                            Belum ada kelas aktif saat ini.
                           </div>
                         )}
                       </SelectContent>
@@ -105,30 +107,31 @@ export default function LandingPage() {
                   <Button 
                     onClick={() => setShowNameInput(true)} 
                     disabled={!selectedClass}
-                    className="w-full h-14 md:h-16 text-lg md:text-xl font-black group rounded-2xl md:rounded-[1.25rem] shadow-xl shadow-primary/30 active:scale-95 transition-all"
+                    className="w-full h-16 md:h-20 text-xl md:text-2xl font-black group rounded-[1.5rem] shadow-2xl shadow-primary/30 active:scale-95 transition-all"
                   >
-                    Lanjutkan <ChevronRight className="ml-2 group-hover:translate-x-2 transition-transform" />
+                    Lanjutkan <ChevronRight className="ml-3 group-hover:translate-x-3 transition-transform w-8 h-8" />
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-5">
-                  <div className="space-y-3">
-                    <label className="text-[10px] md:text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Siapa Namamu?</label>
+                <div className="space-y-6 animate-in slide-in-from-right-12 duration-500">
+                  <div className="space-y-4">
+                    <label className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">Siapa Nama Lengkapmu?</label>
                     <Input 
                       placeholder="Masukkan nama lengkap" 
                       value={studentName}
                       onChange={(e) => setStudentName(e.target.value)}
-                      className="h-14 md:h-16 text-lg md:text-xl border-2 rounded-2xl md:rounded-[1.25rem] focus:ring-4 focus:ring-primary/20 bg-background font-bold placeholder:font-medium"
+                      className="h-16 md:h-20 text-xl md:text-2xl border-4 rounded-[1.5rem] focus:ring-8 focus:ring-primary/10 bg-background font-black placeholder:font-medium shadow-inner"
+                      autoFocus
                     />
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                    <Button variant="outline" onClick={() => setShowNameInput(false)} className="h-14 md:h-16 px-8 rounded-2xl md:rounded-[1.25rem] border-2 font-bold text-base md:text-lg order-2 sm:order-1">Kembali</Button>
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                    <Button variant="outline" onClick={() => setShowNameInput(false)} className="h-16 md:h-20 px-10 rounded-[1.5rem] border-4 font-black text-xl order-2 sm:order-1 active:scale-95 transition-all">Kembali</Button>
                     <Button 
                       onClick={handleStart} 
                       disabled={!studentName}
-                      className="flex-1 h-14 md:h-16 text-lg md:text-xl font-black rounded-2xl md:rounded-[1.25rem] shadow-xl shadow-primary/30 active:scale-95 transition-all order-1 sm:order-2"
+                      className="flex-1 h-16 md:h-20 text-xl md:text-2xl font-black rounded-[1.5rem] shadow-2xl shadow-primary/30 active:scale-95 transition-all order-1 sm:order-2"
                     >
-                      Mulai <Sparkles className="ml-2 w-5 h-5 md:w-6 md:h-6" />
+                      Mulai Kuis <Sparkles className="ml-3 w-7 h-7" />
                     </Button>
                   </div>
                 </div>
@@ -138,8 +141,8 @@ export default function LandingPage() {
         </div>
       </main>
       
-      <footer className="w-full text-center pb-8 text-muted-foreground/40 text-[10px] font-black uppercase tracking-[0.5em] z-10 px-4">
-        © 2024 BRAINQUEST DIGITAL
+      <footer className="w-full text-center pb-10 text-muted-foreground/30 text-[10px] font-black uppercase tracking-[0.6em] z-10 px-4">
+        © 2024 BRAINQUEST DIGITAL • REAL-TIME LEARNING
       </footer>
     </div>
   );
