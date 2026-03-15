@@ -4,6 +4,7 @@ import {
   collection, 
   getDocs, 
   addDoc, 
+  setDoc,
   updateDoc, 
   deleteDoc, 
   doc, 
@@ -12,7 +13,6 @@ import {
   orderBy, 
   onSnapshot,
   serverTimestamp,
-  getDoc,
   limit
 } from 'firebase/firestore';
 import { Class, Quiz } from '@/lib/types';
@@ -48,7 +48,7 @@ export const getClasses = async () => {
 };
 
 export const listenToClasses = (callback: (classes: Class[]) => void) => {
-  const q = query(collection(db, CLASSES_COL), orderBy('name', 'asc'), limit(100));
+  const q = query(collection(db, CLASSES_COL), orderBy('name', 'asc'));
   return onSnapshot(q, (querySnapshot) => {
     const classes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
     callback(classes);
@@ -74,7 +74,8 @@ export const saveClass = async (classData: Partial<Class>) => {
       const finalData = {
         name: cleaned.name || 'Tanpa Nama',
         active: cleaned.active ?? true,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       };
       const docRef = await addDoc(collection(db, CLASSES_COL), finalData);
       return docRef.id;
@@ -107,7 +108,7 @@ export const getQuizzes = async () => {
 };
 
 export const listenToQuizzes = (callback: (quizzes: Quiz[]) => void) => {
-  const q = query(collection(db, QUIZZES_COL), limit(100));
+  const q = query(collection(db, QUIZZES_COL));
   return onSnapshot(q, (querySnapshot) => {
     const quizzes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
     callback(quizzes);
@@ -128,19 +129,19 @@ export const saveQuiz = async (quizData: Partial<Quiz>) => {
   }));
 
   try {
+    const payload = {
+      title: data.title || 'Kuis Baru',
+      classId: data.classId || '',
+      questions: cleanQuestions,
+      updatedAt: serverTimestamp()
+    };
+
     if (id && !id.startsWith('temp-')) {
-      await updateDoc(doc(db, QUIZZES_COL, id), {
-        title: data.title,
-        classId: data.classId,
-        questions: cleanQuestions,
-        updatedAt: serverTimestamp()
-      });
+      await updateDoc(doc(db, QUIZZES_COL, id), payload);
       return id;
     } else {
       const docRef = await addDoc(collection(db, QUIZZES_COL), {
-        title: data.title || 'Kuis Baru',
-        classId: data.classId || '',
-        questions: cleanQuestions,
+        ...payload,
         createdAt: serverTimestamp()
       });
       return docRef.id;
@@ -196,7 +197,7 @@ export const updateScore = async (id: string, data: any) => {
 };
 
 export const listenToScores = (callback: (scores: any[]) => void) => {
-  const q = query(collection(db, SCORES_COL), orderBy('timestamp', 'desc'), limit(100));
+  const q = query(collection(db, SCORES_COL), orderBy('timestamp', 'desc'));
   return onSnapshot(q, (querySnapshot) => {
     const scores = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(scores);

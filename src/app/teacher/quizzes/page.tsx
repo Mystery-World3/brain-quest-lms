@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { listenToQuizzes, saveQuiz, deleteQuiz, getClasses, listenToClasses } from '@/services/database';
+import { listenToQuizzes, saveQuiz, deleteQuiz, listenToClasses } from '@/services/database';
 import { Quiz, Question, Class, QuestionType } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,14 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, Save, Upload, Check, Sigma, BookOpen, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Save, Upload, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
 
 const mathSymbols = [
   "x", "x₁", "x₂", "y", "y₁", "y₂", "r", "r₁", "r₂", "m", "+", "-", "×", "÷", "·",
@@ -93,28 +92,24 @@ export default function QuizManagement() {
 
   const handleSaveQuiz = async () => {
     if (!editingQuiz?.title || !editingQuiz?.classId) {
-      toast({ variant: "destructive", title: "Data Belum Lengkap" });
+      toast({ variant: "destructive", title: "Data Belum Lengkap", description: "Judul dan Kelas wajib diisi." });
       return;
     }
 
     setIsSaving(true);
-    const savePromise = saveQuiz(editingQuiz);
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('timeout')), 3000)
-    );
-
     try {
-      await Promise.race([savePromise, timeoutPromise]);
-      toast({ title: "Berhasil Disimpan" });
+      await saveQuiz(editingQuiz);
+      toast({ title: "Berhasil Disimpan di Cloud" });
+      setIsDialogOpen(false);
     } catch (err: any) {
-      if (err.message === 'timeout') {
-        toast({ title: "Sinkronisasi...", description: "Data dikirim ke Cloud." });
-      } else {
-        toast({ variant: 'destructive', title: 'Gagal Menyimpan' });
-      }
+      console.error(err);
+      toast({ 
+        variant: 'destructive', 
+        title: 'Gagal Menyimpan', 
+        description: 'Pastikan koneksi internet aktif.' 
+      });
     } finally {
       setIsSaving(false);
-      setIsDialogOpen(false);
     }
   };
 
@@ -179,32 +174,6 @@ export default function QuizManagement() {
     });
   };
 
-  const handleBulkUpload = () => {
-    if (!uploadJson.trim()) return;
-    try {
-      const parsed = JSON.parse(uploadJson);
-      if (editingQuiz) {
-        const validatedQuestions = parsed.map((q: any, i: number) => ({
-          id: `q-bulk-${Date.now()}-${i}`,
-          type: q.type || 'multiple-choice',
-          text: q.text || '',
-          explanation: q.explanation || '',
-          options: q.options || (q.type === 'short-answer' ? [] : ['', '', '', '']),
-          correctAnswer: q.correctAnswer ?? (q.type === 'short-answer' ? '' : 0)
-        }));
-        setEditingQuiz({
-          ...editingQuiz,
-          questions: [...(editingQuiz.questions || []), ...validatedQuestions]
-        });
-        setIsUploadOpen(false);
-        setUploadJson('');
-        toast({ title: "Import Berhasil" });
-      }
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Format JSON Salah" });
-    }
-  };
-
   const StaticMathKeyboard = ({ onSelect }: { onSelect: (s: string) => void }) => (
     <div className="grid grid-cols-6 sm:grid-cols-10 md:grid-cols-12 gap-1.5 p-3 bg-slate-900/50 rounded-2xl border border-white/5 mt-2">
       {mathSymbols.map(sym => (
@@ -266,7 +235,7 @@ export default function QuizManagement() {
               <TableBody>
                 {loading ? (
                   <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold animate-pulse text-primary">Sinkronisasi Cloud...</TableCell></TableRow>
-                ) : filteredQuizzes.map((quiz) => (
+                ) : filteredQuizzes.length > 0 ? filteredQuizzes.map((quiz) => (
                   <TableRow key={quiz.id} className="hover:bg-primary/5 transition-colors group border-b">
                     <TableCell className="font-black text-lg pl-8 py-6 text-foreground">{quiz.title}</TableCell>
                     <TableCell>
@@ -277,19 +246,21 @@ export default function QuizManagement() {
                     <TableCell className="font-bold text-muted-foreground">{quiz.questions.length} Soal</TableCell>
                     <TableCell className="text-right pr-8">
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="icon" onClick={() => openEditDialog(quiz)} className="h-10 w-10 rounded-xl border-2 hover:bg-primary hover:text-white transition-all"><Pencil size={18} /></Button>
+                        <Button variant="outline" size="icon" onClick={() => openEditDialog(quiz)} className="h-10 w-10 rounded-xl border-2 hover:bg-primary hover:text-white transition-all text-foreground"><Pencil size={18} /></Button>
                         <Button variant="outline" size="icon" onClick={() => handleDeleteRequest(quiz.id)} className="h-10 w-10 rounded-xl border-2 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18} /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                )) : (
+                  <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold text-muted-foreground">Belum ada data kuis.</TableCell></TableRow>
+                )}
               </TableBody>
             </Table>
           </ScrollArea>
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => !isSaving && setIsDialogOpen(open)}>
         <DialogContent className="max-w-4xl w-[95vw] md:w-full max-h-[90vh] overflow-hidden flex flex-col rounded-[2rem] md:rounded-[2.5rem] border-none shadow-2xl p-0 bg-[#0a0c10] text-white">
           <div className="p-6 md:p-8 shrink-0">
             <DialogHeader className="flex flex-row justify-between items-start">
@@ -297,7 +268,7 @@ export default function QuizManagement() {
                 <DialogTitle className="text-xl md:text-3xl font-headline font-black text-white">
                   {editingQuiz?.id ? 'Edit Kuis' : 'Buat Kuis Cloud'}
                 </DialogTitle>
-                <DialogDescription className="text-white/40 font-bold">Data tersimpan otomatis.</DialogDescription>
+                <DialogDescription className="text-white/40 font-bold">Data tersimpan otomatis ke Cloud.</DialogDescription>
               </div>
               <Button onClick={() => setIsUploadOpen(true)} variant="outline" className="bg-white/5 border-white/10 text-white h-12 rounded-xl">
                 <Upload className="mr-2 h-4 w-4" /> Import JSON

@@ -33,11 +33,7 @@ export default function ClassManagement() {
       setClasses(data);
       setLoading(false);
     });
-    const timer = setTimeout(() => setLoading(false), 3000);
-    return () => {
-      unsubscribe();
-      clearTimeout(timer);
-    };
+    return () => unsubscribe();
   }, []);
 
   const filteredClasses = classes.filter(c => 
@@ -76,26 +72,25 @@ export default function ClassManagement() {
   };
 
   const handleSaveClass = async () => {
-    if (!editingClass?.name?.trim()) return;
+    if (!editingClass?.name?.trim()) {
+      toast({ variant: "destructive", title: "Nama kelas tidak boleh kosong" });
+      return;
+    }
+    
     setIsSaving(true);
-
-    const savePromise = saveClass(editingClass);
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('timeout')), 3000)
-    );
-
     try {
-      await Promise.race([savePromise, timeoutPromise]);
+      await saveClass(editingClass);
       toast({ title: "Berhasil Disimpan" });
+      setIsDialogOpen(false);
     } catch (err: any) {
-      if (err.message === 'timeout') {
-        toast({ title: "Sinkronisasi...", description: "Data sedang dikirim ke Cloud." });
-      } else {
-        toast({ variant: 'destructive', title: 'Gagal Menyimpan' });
-      }
+      console.error(err);
+      toast({ 
+        variant: 'destructive', 
+        title: 'Gagal Menyimpan', 
+        description: 'Pastikan koneksi internet stabil dan coba lagi.' 
+      });
     } finally {
       setIsSaving(false);
-      setIsDialogOpen(false);
     }
   };
 
@@ -128,14 +123,14 @@ export default function ClassManagement() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow>
-                  <TableHead className="h-14 font-black uppercase text-xs pl-8">Nama Kelas</TableHead>
-                  <TableHead className="h-14 font-black uppercase text-xs text-center">Status</TableHead>
-                  <TableHead className="text-right h-14 font-black uppercase text-xs pr-8">Aksi</TableHead>
+                  <TableHead className="h-14 font-black uppercase text-xs pl-8 text-foreground">Nama Kelas</TableHead>
+                  <TableHead className="h-14 font-black uppercase text-xs text-center text-foreground">Status</TableHead>
+                  <TableHead className="text-right h-14 font-black uppercase text-xs pr-8 text-foreground">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={3} className="text-center py-10 font-bold">Sinkronisasi...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={3} className="text-center py-10 font-bold animate-pulse text-primary">Sinkronisasi Cloud...</TableCell></TableRow>
                 ) : filteredClasses.length > 0 ? filteredClasses.map((cls) => (
                   <TableRow key={cls.id} className="hover:bg-primary/5 border-b">
                     <TableCell className="pl-8 py-4">
@@ -162,7 +157,7 @@ export default function ClassManagement() {
                     </TableCell>
                   </TableRow>
                 )) : (
-                  <TableRow><TableCell colSpan={3} className="text-center py-10 font-bold text-muted-foreground">Tidak ada data.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={3} className="text-center py-10 font-bold text-muted-foreground">Tidak ada data kelas.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -170,7 +165,7 @@ export default function ClassManagement() {
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => !isSaving && setIsDialogOpen(open)}>
         <DialogContent className="max-w-md rounded-[2rem] p-0 bg-background overflow-hidden border-none shadow-2xl">
           <div className="bg-primary p-6 text-white font-black text-xl">{editingClass?.id ? 'Edit Kelas' : 'Tambah Kelas'}</div>
           <div className="p-6 space-y-4">
@@ -197,6 +192,7 @@ export default function ClassManagement() {
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <AlertDialogContent className="rounded-[2rem]">
           <AlertDialogHeader><AlertDialogTitle className="font-black">Hapus Kelas?</AlertDialogTitle></AlertDialogHeader>
+          <AlertDialogDescription className="font-bold">Semua data kuis yang terkait dengan kelas ini akan tetap ada, namun kelas ini tidak lagi muncul di menu siswa.</AlertDialogDescription>
           <AlertDialogFooter className="gap-3 mt-4">
             <AlertDialogCancel className="h-12 rounded-xl">Batal</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="h-12 rounded-xl bg-red-600 font-black">Hapus</AlertDialogAction>
