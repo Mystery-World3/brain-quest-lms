@@ -22,14 +22,13 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Listener real-time untuk sinkronisasi instan kelas aktif
+    // Listener real-time dengan timeout paksa 3 detik untuk kecepatan maksimal
     const unsubscribe = listenToClasses((classes) => {
       setAvailableClasses(classes.filter(c => c.active));
       setLoading(false);
     });
 
-    // Fallback safety: Jika koneksi sangat lambat, paksa matikan loading setelah 6 detik
-    const timer = setTimeout(() => setLoading(false), 6000);
+    const timer = setTimeout(() => setLoading(false), 3000);
 
     return () => {
       unsubscribe();
@@ -68,7 +67,7 @@ export default function LandingPage() {
         <div className="w-full max-w-md">
           <Card className="shadow-2xl border-none ring-1 ring-primary/20 bg-card/90 backdrop-blur-md rounded-[2rem] md:rounded-[2.5rem] overflow-hidden">
             <CardHeader className="text-center pb-2 pt-8 md:pt-12">
-              <div className="mx-auto bg-accent/20 p-4 md:p-5 rounded-full w-fit mb-4 md:mb-6 ring-4 ring-accent/10 animate-pulse">
+              <div className="mx-auto bg-accent/20 p-4 md:p-5 rounded-full w-fit mb-4 md:mb-6 ring-4 ring-accent/10">
                 <BookOpen className="text-primary w-10 h-10 md:w-12 md:h-12" />
               </div>
               <CardTitle className="text-3xl md:text-4xl font-headline font-black text-foreground">Ayo Mulai!</CardTitle>
@@ -80,10 +79,10 @@ export default function LandingPage() {
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-10 gap-3">
                   <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                  <p className="font-black text-muted-foreground animate-pulse">Menghubungkan ke Cloud...</p>
+                  <p className="font-black text-muted-foreground animate-pulse">Menghubungkan...</p>
                 </div>
               ) : !showNameInput ? (
-                <div className="space-y-5 animate-in fade-in zoom-in-95 duration-500">
+                <div className="space-y-5">
                   <div className="space-y-3">
                     <label className="text-[10px] md:text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Pilih Kelas</label>
                     <Select onValueChange={(val) => setSelectedClass(val)}>
@@ -112,7 +111,7 @@ export default function LandingPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-5 animate-in fade-in slide-in-from-right-8 duration-500">
+                <div className="space-y-5">
                   <div className="space-y-3">
                     <label className="text-[10px] md:text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Siapa Namamu?</label>
                     <Input 

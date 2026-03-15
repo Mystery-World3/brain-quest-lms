@@ -16,33 +16,33 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Gunakan listener real-time untuk semua data utama
-    const unsubscribeScores = listenToScores((data) => {
-      setScores(data);
-    });
+    // Gabungan listener real-time dengan timeout paksa 3 detik
+    const unsubscribeScores = listenToScores(setScores);
+    const unsubscribeClasses = listenToClasses(setClasses);
+    const unsubscribeQuizzes = listenToQuizzes(setQuizzes);
 
-    const unsubscribeClasses = listenToClasses((data) => {
-      setClasses(data);
-      // Sinkronisasi status pemuatan
-      if (data.length >= 0) setLoading(false);
-    });
-
-    const unsubscribeQuizzes = listenToQuizzes((data) => {
-      setQuizzes(data);
-    });
+    const timer = setTimeout(() => setLoading(false), 3000);
 
     return () => {
       unsubscribeScores();
       unsubscribeClasses();
       unsubscribeQuizzes();
+      clearTimeout(timer);
     };
   }, []);
+
+  // Update loading state when data arrives
+  useEffect(() => {
+    if (classes.length > 0 || scores.length > 0) {
+      setLoading(false);
+    }
+  }, [classes, scores]);
 
   if (loading) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="font-black text-muted-foreground animate-pulse tracking-widest uppercase text-xs">Sinkronisasi Cloud...</p>
+        <p className="font-black text-muted-foreground tracking-widest uppercase text-xs">Sinkronisasi Instan...</p>
       </div>
     );
   }
@@ -61,22 +61,20 @@ export default function TeacherDashboard() {
     { label: 'Rata-rata Skor', value: `${averageScore}%`, icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-100' },
   ];
 
-  const chartData = classes.map(cls => {
+  const chartData = classes.slice(0, 10).map(cls => {
     const classScores = scores.filter(s => s.classId === cls.id);
     const avg = classScores.length > 0 
       ? Math.round(classScores.reduce((acc, s) => acc + s.score, 0) / classScores.length)
       : 0;
     return { name: (cls.name || 'Kelas').replace('Kelas ', ''), score: avg };
-  }).filter(d => d.score > 0 || classes.length <= 5);
+  });
 
-  const finalChartData = chartData.length > 0 ? chartData : [
-    { name: '-', score: 0 }
-  ];
+  const finalChartData = chartData.length > 0 ? chartData : [{ name: '-', score: 0 }];
 
-  const recentActivities = scores.slice(0, 8).map(s => ({
+  const recentActivities = scores.slice(0, 5).map(s => ({
     user: s.name,
-    action: `menyelesaikan kuis "${s.quiz}"`,
-    time: s.timestamp ? new Date(s.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Baru saja'
+    action: `menyelesaikan "${s.quiz}"`,
+    time: s.timestamp ? new Date(s.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Baru'
   }));
 
   return (
@@ -84,20 +82,20 @@ export default function TeacherDashboard() {
       <div className="flex justify-between items-end px-1">
         <div>
           <h1 className="text-3xl md:text-5xl font-headline font-black text-foreground tracking-tighter">Dashboard Real-time</h1>
-          <p className="text-sm md:text-lg font-bold text-muted-foreground mt-1">Status kuis dan aktivitas siswa terpantau secara instan.</p>
+          <p className="text-sm md:text-lg font-bold text-muted-foreground mt-1">Status kuis terpantau secara instan.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
         {stats.map((stat, i) => (
-          <Card key={i} className="border-none shadow-xl rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden student-card-hover bg-card/60 backdrop-blur-sm">
-            <CardContent className="p-5 md:p-8 flex items-center gap-4 md:gap-6">
-              <div className={cn(stat.bg, stat.color, "p-3 md:p-5 rounded-2xl ring-4 ring-white dark:ring-primary/5 shadow-inner shrink-0")}>
-                <stat.icon size={24} className="md:w-8 md:h-8" />
+          <Card key={i} className="border-none shadow-xl rounded-[1.5rem] bg-card/60 backdrop-blur-sm overflow-hidden">
+            <CardContent className="p-4 md:p-8 flex flex-col sm:flex-row items-center gap-3 md:gap-6 text-center sm:text-left">
+              <div className={cn(stat.bg, stat.color, "p-3 md:p-5 rounded-2xl shrink-0")}>
+                <stat.icon size={20} className="md:w-8 md:h-8" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] md:text-xs font-black uppercase tracking-widest text-muted-foreground truncate">{stat.label}</p>
-                <h3 className="text-xl md:text-3xl font-black text-foreground truncate">{stat.value}</h3>
+                <p className="text-[9px] md:text-xs font-black uppercase tracking-widest text-muted-foreground truncate">{stat.label}</p>
+                <h3 className="text-lg md:text-3xl font-black text-foreground truncate">{stat.value}</h3>
               </div>
             </CardContent>
           </Card>
@@ -106,53 +104,50 @@ export default function TeacherDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
         <Card className="lg:col-span-2 border-none shadow-2xl rounded-[1.5rem] md:rounded-[3rem] bg-card/50 backdrop-blur-md overflow-hidden">
-          <CardHeader className="p-6 md:p-10 border-b border-border/50">
+          <CardHeader className="p-6 md:p-10 border-b">
             <CardTitle className="text-lg md:text-2xl font-black flex items-center gap-3">
-              <TrendingUp className="text-primary" /> Performa Rata-rata per Kelas
+              <TrendingUp className="text-primary" /> Performa Kelas
             </CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px] md:h-[450px] p-4 md:p-10">
+          <CardContent className="h-[250px] md:h-[400px] p-4 md:p-10">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={finalChartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} className="font-black text-[10px] md:text-xs" />
-                <YAxis axisLine={false} tickLine={false} className="font-black text-[10px] md:text-xs" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} className="font-bold text-[10px]" />
+                <YAxis axisLine={false} tickLine={false} className="font-bold text-[10px]" />
                 <Tooltip 
-                  contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
+                  contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
                   cursor={{ fill: 'hsl(var(--primary) / 0.05)', radius: 10 }}
                 />
-                <Bar dataKey="score" fill="hsl(var(--primary))" radius={[12, 12, 0, 0]} barSize={40} className="drop-shadow-xl" />
+                <Bar dataKey="score" fill="hsl(var(--primary))" radius={[10, 10, 0, 0]} barSize={35} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card className="border-none shadow-2xl rounded-[1.5rem] md:rounded-[3rem] bg-card/50 backdrop-blur-md overflow-hidden">
-          <CardHeader className="p-6 md:p-10 border-b border-border/50 bg-primary/5">
+          <CardHeader className="p-6 md:p-10 border-b bg-primary/5">
             <CardTitle className="text-lg md:text-2xl font-black flex items-center gap-3 text-primary">
-              <Clock /> Aktivitas Terbaru
+              <Clock /> Aktivitas
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 md:p-10">
-            <div className="space-y-6 md:space-y-10">
+            <div className="space-y-6">
               {recentActivities.length > 0 ? recentActivities.map((item, i) => (
-                <div key={i} className="flex gap-4 relative group">
-                  {i !== recentActivities.length - 1 && (
-                    <div className="absolute left-3 top-8 w-0.5 h-10 bg-border group-hover:bg-primary/30 transition-colors" />
-                  )}
-                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 ring-4 ring-primary/10 z-10">
-                    <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                <div key={i} className="flex gap-4 relative">
+                  <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0 ring-4 ring-primary/10">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm md:text-base font-black text-foreground truncate">{item.user}</p>
-                    <p className="text-xs md:sm text-muted-foreground font-bold leading-snug">{item.action}</p>
-                    <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mt-1">{item.time}</p>
+                    <p className="text-sm font-black text-foreground truncate">{item.user}</p>
+                    <p className="text-xs text-muted-foreground font-bold">{item.action}</p>
+                    <p className="text-[9px] font-black uppercase text-muted-foreground/60 mt-0.5">{item.time}</p>
                   </div>
                 </div>
               )) : (
-                <div className="text-center py-12 md:py-20">
-                   <Users className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground/20 mx-auto mb-4" />
-                   <p className="font-bold text-muted-foreground text-sm md:text-base">Belum ada aktivitas masuk.</p>
+                <div className="text-center py-10 opacity-20">
+                   <Users className="w-10 h-10 mx-auto mb-2" />
+                   <p className="font-bold text-xs">Kosong</p>
                 </div>
               )}
             </div>

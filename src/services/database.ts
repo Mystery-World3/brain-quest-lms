@@ -12,7 +12,8 @@ import {
   orderBy, 
   onSnapshot,
   serverTimestamp,
-  getDoc
+  getDoc,
+  limit
 } from 'firebase/firestore';
 import { Class, Quiz } from '@/lib/types';
 
@@ -29,37 +30,30 @@ export const getClasses = async () => {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
   } catch (error) {
     console.error("Error getClasses:", error);
-    throw error;
+    return [];
   }
 };
 
 export const listenToClasses = (callback: (classes: Class[]) => void) => {
-  const q = query(collection(db, CLASSES_COL), orderBy('name', 'asc'));
+  const q = query(collection(db, CLASSES_COL), orderBy('name', 'asc'), limit(50));
   return onSnapshot(q, (querySnapshot) => {
     const classes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Class));
     callback(classes);
   }, (error) => {
     console.error("Listen to classes error:", error);
-    callback([]); // Matikan loading di UI dengan mengirim array kosong jika error
+    callback([]);
   });
 };
 
 export const saveClass = async (classData: Partial<Class>) => {
   const { id, ...data } = classData;
-  
   try {
     if (id && !id.startsWith('temp-')) {
       const docRef = doc(db, CLASSES_COL, id);
-      const existingDoc = await getDoc(docRef);
-      const existingData = existingDoc.exists() ? existingDoc.data() : {};
-      
-      const finalUpdate = {
-        ...existingData,
+      await updateDoc(docRef, {
         ...data,
         updatedAt: serverTimestamp()
-      };
-      
-      await updateDoc(docRef, finalUpdate);
+      });
       return id;
     } else {
       const finalData = {
@@ -93,25 +87,22 @@ export const getQuizzes = async () => {
     const querySnapshot = await getDocs(collection(db, QUIZZES_COL));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
   } catch (error) {
-    console.error("Error getQuizzes:", error);
-    throw error;
+    return [];
   }
 };
 
 export const listenToQuizzes = (callback: (quizzes: Quiz[]) => void) => {
-  const q = query(collection(db, QUIZZES_COL));
+  const q = query(collection(db, QUIZZES_COL), limit(50));
   return onSnapshot(q, (querySnapshot) => {
     const quizzes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Quiz));
     callback(quizzes);
   }, (error) => {
-    console.error("Listen to quizzes error:", error);
-    callback([]); // Matikan loading di UI
+    callback([]);
   });
 };
 
 export const saveQuiz = async (quizData: Partial<Quiz>) => {
   const { id, ...data } = quizData;
-  
   const cleanQuestions = (data.questions || []).map(q => ({
     id: q.id || `q-${Date.now()}-${Math.random()}`,
     type: q.type || 'multiple-choice',
@@ -123,8 +114,7 @@ export const saveQuiz = async (quizData: Partial<Quiz>) => {
 
   try {
     if (id && !id.startsWith('temp-')) {
-      const docRef = doc(db, QUIZZES_COL, id);
-      await updateDoc(docRef, {
+      await updateDoc(doc(db, QUIZZES_COL, id), {
         title: data.title,
         classId: data.classId,
         questions: cleanQuestions,
@@ -141,7 +131,6 @@ export const saveQuiz = async (quizData: Partial<Quiz>) => {
       return docRef.id;
     }
   } catch (error) {
-    console.error("Error saveQuiz:", error);
     throw error;
   }
 };
@@ -150,7 +139,6 @@ export const deleteQuiz = async (id: string) => {
   try {
     await deleteDoc(doc(db, QUIZZES_COL, id));
   } catch (error) {
-    console.error("Error deleteQuiz:", error);
     throw error;
   }
 };
@@ -166,7 +154,6 @@ export const addScore = async (scoreEntry: any) => {
     });
     return docRef.id;
   } catch (error) {
-    console.error("Error addScore:", error);
     throw error;
   }
 };
@@ -175,7 +162,6 @@ export const deleteScore = async (id: string) => {
   try {
     await deleteDoc(doc(db, SCORES_COL, id));
   } catch (error) {
-    console.error("Error deleteScore:", error);
     throw error;
   }
 };
@@ -188,19 +174,17 @@ export const updateScore = async (id: string, data: any) => {
       updatedAt: serverTimestamp()
     });
   } catch (error) {
-    console.error("Error updateScore:", error);
     throw error;
   }
 };
 
 export const listenToScores = (callback: (scores: any[]) => void) => {
-  const q = query(collection(db, SCORES_COL), orderBy('timestamp', 'desc'));
+  const q = query(collection(db, SCORES_COL), orderBy('timestamp', 'desc'), limit(100));
   return onSnapshot(q, (querySnapshot) => {
     const scores = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(scores);
   }, (error) => {
-    console.error("Listen to scores error:", error);
-    callback([]); // Matikan loading di UI
+    callback([]);
   });
 };
 
@@ -209,13 +193,13 @@ export const listenToLeaderboard = (quizId: string, classId: string, callback: (
     collection(db, SCORES_COL), 
     where('quizId', '==', quizId),
     where('classId', '==', classId),
-    orderBy('score', 'desc')
+    orderBy('score', 'desc'),
+    limit(10)
   );
   return onSnapshot(q, (querySnapshot) => {
     const scores = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(scores);
   }, (error) => {
-    console.error("Listen to leaderboard error:", error);
-    callback([]); // Matikan loading di UI
+    callback([]);
   });
 };
