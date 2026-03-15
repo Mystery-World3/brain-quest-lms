@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Search, Save, Upload, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Save, Upload, Loader2, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -31,13 +31,10 @@ export default function QuizManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
   const [editingQuiz, setEditingQuiz] = useState<Partial<Quiz> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [uploadJson, setUploadJson] = useState('');
-  
+
   useEffect(() => {
     const unsubscribeQuizzes = listenToQuizzes((data) => {
       setQuizzes(data);
@@ -54,27 +51,33 @@ export default function QuizManagement() {
     };
   }, []);
 
+  const handleSaveQuiz = () => {
+    if (!editingQuiz?.title || !editingQuiz?.classId) {
+      toast({ variant: "destructive", title: "Data Belum Lengkap", description: "Judul dan Kelas wajib diisi." });
+      return;
+    }
+
+    const dataToSave = { ...editingQuiz };
+    setIsDialogOpen(false); // INSTANT CLOSE
+
+    saveQuiz(dataToSave)
+      .then(() => {
+        toast({ title: "Kuis Tersimpan", description: "Data Anda telah sinkron dengan Cloud." });
+      })
+      .catch((err) => {
+        console.error(err);
+        toast({ 
+          variant: 'destructive', 
+          title: 'Gagal Sinkron', 
+          description: 'Data disimpan lokal sementara.' 
+        });
+      });
+  };
+
   const filteredQuizzes = quizzes.filter(q => 
     q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     classes.find(c => c.id === q.classId)?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const handleDeleteRequest = (id: string) => {
-    setQuizToDelete(id);
-    setIsConfirmOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (quizToDelete) {
-      try {
-        await deleteQuiz(quizToDelete);
-        toast({ title: "Kuis Dihapus" });
-      } catch (err) {
-        toast({ variant: 'destructive', title: 'Gagal Menghapus' });
-      }
-    }
-    setIsConfirmOpen(false);
-  };
 
   const openAddDialog = () => {
     setEditingQuiz({
@@ -88,29 +91,6 @@ export default function QuizManagement() {
   const openEditDialog = (quiz: Quiz) => {
     setEditingQuiz({ ...quiz });
     setIsDialogOpen(true);
-  };
-
-  const handleSaveQuiz = async () => {
-    if (!editingQuiz?.title || !editingQuiz?.classId) {
-      toast({ variant: "destructive", title: "Data Belum Lengkap", description: "Judul dan Kelas wajib diisi." });
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await saveQuiz(editingQuiz);
-      toast({ title: "Berhasil Disimpan di Cloud" });
-      setIsDialogOpen(false);
-    } catch (err: any) {
-      console.error(err);
-      toast({ 
-        variant: 'destructive', 
-        title: 'Gagal Menyimpan', 
-        description: 'Pastikan koneksi internet aktif.' 
-      });
-    } finally {
-      setIsSaving(false);
-    }
   };
 
   const addQuestions = (count: number) => {
@@ -142,11 +122,9 @@ export default function QuizManagement() {
     if (editingQuiz && editingQuiz.questions) {
       const newQuestions = [...editingQuiz.questions];
       newQuestions[idx] = { ...newQuestions[idx], [field]: value };
-      
       if (field === 'type') {
         newQuestions[idx].correctAnswer = value === 'multiple-choice' ? 0 : '';
       }
-      
       setEditingQuiz({ ...editingQuiz, questions: newQuestions });
     }
   };
@@ -195,41 +173,40 @@ export default function QuizManagement() {
   );
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
-          <h1 className="text-3xl md:text-4xl font-headline font-black text-primary tracking-tighter">Manajemen Kuis</h1>
-          <p className="text-base md:text-lg font-bold text-muted-foreground mt-1">Bank soal tersinkron otomatis.</p>
+          <h1 className="text-4xl font-headline font-black text-primary tracking-tighter flex items-center gap-3">
+            Manajemen Kuis <Sparkles />
+          </h1>
+          <p className="text-base md:text-lg font-bold text-muted-foreground mt-1">Bank soal tersinkron otomatis antar perangkat.</p>
         </div>
-        
-        <div className="flex gap-3 w-full sm:w-auto">
-          <Button onClick={openAddDialog} className="flex-1 sm:flex-none h-12 md:h-14 px-6 md:px-8 font-black text-base md:text-lg rounded-2xl shadow-xl">
-            <Plus className="mr-2" size={24} /> Tambah Kuis
-          </Button>
-        </div>
+        <Button onClick={openAddDialog} className="w-full sm:w-auto h-14 px-8 font-black text-lg rounded-2xl shadow-xl">
+          <Plus className="mr-2" size={24} /> Tambah Kuis
+        </Button>
       </div>
 
-      <Card className="border-none shadow-2xl rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-card/50 backdrop-blur-sm">
+      <Card className="border-none shadow-2xl rounded-[2rem] overflow-hidden bg-card/50 backdrop-blur-sm">
         <CardHeader className="bg-card border-b p-6 md:p-8">
-          <div className="relative w-full max-w-md group">
+          <div className="relative w-full max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input 
               placeholder="Cari kuis..." 
-              className="pl-12 h-12 md:h-14 rounded-xl md:rounded-2xl border-2 font-bold text-base md:text-lg bg-background"
+              className="pl-12 h-14 rounded-2xl border-2 font-bold text-lg bg-background"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <ScrollArea className="w-full overflow-auto">
-            <Table className="min-w-[800px]">
+          <ScrollArea className="w-full">
+            <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow>
-                  <TableHead className="w-[300px] h-16 font-black uppercase text-xs tracking-widest pl-8 text-foreground">Judul Kuis</TableHead>
-                  <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Kelas</TableHead>
-                  <TableHead className="h-16 font-black uppercase text-xs tracking-widest text-foreground">Jumlah Soal</TableHead>
-                  <TableHead className="text-right h-16 font-black uppercase text-xs tracking-widest pr-8 text-foreground">Aksi</TableHead>
+                  <TableHead className="pl-8 h-16 font-black uppercase text-xs text-foreground">Judul Kuis</TableHead>
+                  <TableHead className="h-16 font-black uppercase text-xs text-foreground">Kelas</TableHead>
+                  <TableHead className="h-16 font-black uppercase text-xs text-foreground text-center">Soal</TableHead>
+                  <TableHead className="text-right pr-8 h-16 font-black uppercase text-xs text-foreground">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -237,17 +214,17 @@ export default function QuizManagement() {
                   <TableRow><TableCell colSpan={4} className="text-center py-20 font-bold animate-pulse text-primary">Sinkronisasi Cloud...</TableCell></TableRow>
                 ) : filteredQuizzes.length > 0 ? filteredQuizzes.map((quiz) => (
                   <TableRow key={quiz.id} className="hover:bg-primary/5 transition-colors group border-b">
-                    <TableCell className="font-black text-lg pl-8 py-6 text-foreground">{quiz.title}</TableCell>
+                    <TableCell className="font-black text-lg pl-8 py-6">{quiz.title}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="font-black py-1.5 px-4 rounded-xl border-none bg-accent/10 text-accent">
                         {classes.find(c => c.id === quiz.classId)?.name || 'Memuat...'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-bold text-muted-foreground">{quiz.questions.length} Soal</TableCell>
+                    <TableCell className="text-center font-bold text-muted-foreground">{quiz.questions.length}</TableCell>
                     <TableCell className="text-right pr-8">
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="icon" onClick={() => openEditDialog(quiz)} className="h-10 w-10 rounded-xl border-2 hover:bg-primary hover:text-white transition-all text-foreground"><Pencil size={18} /></Button>
-                        <Button variant="outline" size="icon" onClick={() => handleDeleteRequest(quiz.id)} className="h-10 w-10 rounded-xl border-2 text-red-500 hover:bg-red-500 hover:text-white transition-all"><Trash2 size={18} /></Button>
+                        <Button variant="outline" size="icon" onClick={() => openEditDialog(quiz)} className="h-10 w-10 rounded-xl border-2"><Pencil size={18} /></Button>
+                        <Button variant="outline" size="icon" onClick={() => { setQuizToDelete(quiz.id); setIsConfirmOpen(true); }} className="h-10 w-10 rounded-xl border-2 text-red-500"><Trash2 size={18} /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -260,23 +237,15 @@ export default function QuizManagement() {
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={(open) => !isSaving && setIsDialogOpen(open)}>
-        <DialogContent className="max-w-4xl w-[95vw] md:w-full max-h-[90vh] overflow-hidden flex flex-col rounded-[2rem] md:rounded-[2.5rem] border-none shadow-2xl p-0 bg-[#0a0c10] text-white">
-          <div className="p-6 md:p-8 shrink-0">
-            <DialogHeader className="flex flex-row justify-between items-start">
-              <div className="space-y-1">
-                <DialogTitle className="text-xl md:text-3xl font-headline font-black text-white">
-                  {editingQuiz?.id ? 'Edit Kuis' : 'Buat Kuis Cloud'}
-                </DialogTitle>
-                <DialogDescription className="text-white/40 font-bold">Data tersimpan otomatis ke Cloud.</DialogDescription>
-              </div>
-              <Button onClick={() => setIsUploadOpen(true)} variant="outline" className="bg-white/5 border-white/10 text-white h-12 rounded-xl">
-                <Upload className="mr-2 h-4 w-4" /> Import JSON
-              </Button>
-            </DialogHeader>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col rounded-[2.5rem] border-none shadow-2xl p-0 bg-[#0a0c10] text-white">
+          <div className="p-8 shrink-0">
+            <DialogTitle className="text-3xl font-headline font-black text-white">
+              {editingQuiz?.id ? 'Ubah Kuis' : 'Buat Kuis Cloud'}
+            </DialogTitle>
           </div>
           
-          <ScrollArea className="flex-1 overflow-y-auto px-4 md:px-8">
+          <ScrollArea className="flex-1 overflow-y-auto px-8">
             <div className="space-y-8 pb-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
@@ -286,12 +255,11 @@ export default function QuizManagement() {
                     value={editingQuiz?.title || ''}
                     onChange={(e) => setEditingQuiz({ ...editingQuiz!, title: e.target.value })}
                     className="h-12 rounded-xl border-white/10 bg-white/5 font-bold text-white" 
-                    disabled={isSaving}
                   />
                 </div>
                 <div className="space-y-3">
                   <label className="text-xs font-black uppercase text-white/60">Kelas</label>
-                  <Select value={editingQuiz?.classId || ''} onValueChange={(val) => setEditingQuiz({ ...editingQuiz!, classId: val })} disabled={isSaving}>
+                  <Select value={editingQuiz?.classId || ''} onValueChange={(val) => setEditingQuiz({ ...editingQuiz!, classId: val })}>
                     <SelectTrigger className="h-12 rounded-xl border-white/10 bg-white/5 font-bold text-white">
                       <SelectValue placeholder="Pilih Kelas" />
                     </SelectTrigger>
@@ -314,7 +282,7 @@ export default function QuizManagement() {
                               <TabsTrigger value="short-answer" className="data-[state=active]:bg-primary rounded-lg text-xs font-black">Isian</TabsTrigger>
                             </TabsList>
                           </Tabs>
-                          <Button variant="ghost" size="icon" onClick={() => removeQuestion(qIdx)} className="text-red-400 h-10 w-10 rounded-xl" disabled={editingQuiz.questions!.length <= 1 || isSaving}>
+                          <Button variant="ghost" size="icon" onClick={() => removeQuestion(qIdx)} className="text-red-400 h-10 w-10 rounded-xl" disabled={editingQuiz.questions!.length <= 1}>
                             <Trash2 size={18} />
                           </Button>
                        </div>
@@ -322,7 +290,7 @@ export default function QuizManagement() {
                     
                     <div className="space-y-4">
                       <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'text', s)} />
-                      <Input placeholder="Pertanyaan..." value={q.text} onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)} className="h-14 bg-white/10 border-white/10 text-white rounded-xl" disabled={isSaving} />
+                      <Input placeholder="Pertanyaan..." value={q.text} onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)} className="h-14 bg-white/10 border-white/10 text-white rounded-xl" />
                     </div>
 
                     {q.type === 'multiple-choice' ? (
@@ -334,7 +302,6 @@ export default function QuizManagement() {
                                 variant={q.correctAnswer === oIdx ? "default" : "ghost"} 
                                 className={cn("h-12 w-12 rounded-xl", q.correctAnswer === oIdx ? "bg-primary" : "bg-white/5 border border-white/10")}
                                 onClick={() => updateQuestion(qIdx, 'correctAnswer', oIdx)}
-                                disabled={isSaving}
                               >
                                 {String.fromCharCode(65 + oIdx)}
                               </Button>
@@ -342,7 +309,7 @@ export default function QuizManagement() {
                                 const newOpts = [...q.options];
                                 newOpts[oIdx] = e.target.value;
                                 updateQuestion(qIdx, 'options', newOpts);
-                              }} className="h-12 bg-white/5 border-white/10 text-white rounded-xl" disabled={isSaving} />
+                              }} className="h-12 bg-white/5 border-white/10 text-white rounded-xl" />
                             </div>
                             <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'option', s, oIdx)} />
                           </div>
@@ -350,23 +317,23 @@ export default function QuizManagement() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                         <Input placeholder="Jawaban..." value={q.correctAnswer as string} onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)} className="h-14 bg-white/10 text-white rounded-xl" disabled={isSaving} />
+                         <Input placeholder="Jawaban..." value={q.correctAnswer as string} onChange={(e) => updateQuestion(qIdx, 'correctAnswer', e.target.value)} className="h-14 bg-white/10 text-white rounded-xl" />
                          <StaticMathKeyboard onSelect={(s) => appendSymbol(qIdx, 'correctAnswer', s)} />
                       </div>
                     )}
                   </div>
                 ))}
-                <Button onClick={() => addQuestions(1)} className="w-full h-14 rounded-xl bg-primary font-black" disabled={isSaving}>
+                <Button onClick={() => addQuestions(1)} className="w-full h-14 rounded-xl bg-primary font-black">
                   <Plus className="mr-2" /> Tambah Soal
                 </Button>
               </div>
             </div>
           </ScrollArea>
 
-          <DialogFooter className="p-6 bg-white/5 border-t border-white/5 flex gap-4">
-            <Button variant="ghost" onClick={() => setIsDialogOpen(false)} disabled={isSaving} className="h-12 rounded-xl font-black text-white/40">Batal</Button>
-            <Button onClick={handleSaveQuiz} disabled={isSaving} className="flex-1 h-12 rounded-xl font-black bg-primary">
-              {isSaving ? <Loader2 className="animate-spin" /> : <Save className="mr-2" />} Simpan Cloud
+          <DialogFooter className="p-8 bg-white/5 border-t border-white/5 flex gap-4">
+            <Button variant="ghost" onClick={() => setIsDialogOpen(false)} className="h-12 rounded-xl font-black text-white/40">Batal</Button>
+            <Button onClick={handleSaveQuiz} className="flex-1 h-12 rounded-xl font-black bg-primary">
+              <Save className="mr-2" /> Simpan Perubahan
             </Button>
           </DialogFooter>
         </DialogContent>

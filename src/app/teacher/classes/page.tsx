@@ -27,41 +27,52 @@ export default function ClassManagement() {
   const [editingClass, setEditingClass] = useState<Partial<Class> | null>(null);
 
   useEffect(() => {
-    // Data akan langsung ditarik dari cache lokal (0ms)
     const unsubscribe = listenToClasses(setClasses);
     return () => unsubscribe();
   }, []);
 
-  const handleSaveClass = async () => {
+  const handleSaveClass = () => {
     if (!editingClass?.name?.trim()) {
       toast({ variant: "destructive", title: "Nama kelas kosong!" });
       return;
     }
     
-    // Instant UI: Tutup modal segera agar terasa sangat cepat
+    // Simpan data sementara untuk diproses
+    const dataToSave = { ...editingClass };
+    
+    // INSTANT UI: Tutup modal segera tanpa menunggu cloud
     setIsDialogOpen(false);
     
-    try {
-      await saveClass(editingClass);
-      toast({ title: "Berhasil!", description: "Data tersinkron otomatis." });
-    } catch (err) {
-      toast({ variant: 'destructive', title: 'Gagal Simpan', description: 'Koneksi bermasalah.' });
-      setIsDialogOpen(true);
-    }
+    // Jalankan simpan di latar belakang (Local-First)
+    saveClass(dataToSave)
+      .then(() => {
+        toast({ title: "Berhasil!", description: "Perubahan telah disinkronkan ke Cloud." });
+      })
+      .catch((err) => {
+        console.error(err);
+        toast({ 
+          variant: "destructive", 
+          title: "Sinkronisasi Tertunda", 
+          description: "Data disimpan secara lokal dan akan diunggah saat koneksi tersedia." 
+        });
+      });
   };
 
-  const handleToggleStatus = async (cls: Class) => {
-    try {
-      await saveClass({ ...cls, active: !cls.active });
-    } catch (err) {
+  const handleToggleStatus = (cls: Class) => {
+    // Toggle instan di latar belakang
+    saveClass({ ...cls, active: !cls.active }).catch(() => {
       toast({ variant: 'destructive', title: 'Gagal update status' });
-    }
+    });
   };
 
   const confirmDelete = async () => {
     if (classToDelete) {
-      await deleteClass(classToDelete);
-      toast({ title: "Terhapus" });
+      try {
+        await deleteClass(classToDelete);
+        toast({ title: "Kelas Terhapus" });
+      } catch (err) {
+        toast({ variant: 'destructive', title: 'Gagal menghapus' });
+      }
     }
     setIsConfirmOpen(false);
   };
