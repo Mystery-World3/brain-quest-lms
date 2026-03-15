@@ -9,15 +9,17 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Inisialisasi Firebase
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Mengaktifkan Offline Persistence agar data langsung muncul tanpa loading
+// MENGAKTIFKAN OFFLINE PERSISTENCE
+// Ini kunci agar data langsung muncul 0 detik tanpa menunggu loading cloud
 const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  localCache: persistentLocalCache({ 
+    tabManager: persistentMultipleTabManager() 
+  })
 });
 
 export { db };
